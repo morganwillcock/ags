@@ -62,6 +62,7 @@
 #include "ac/dynobj/all_scriptclasses.h"
 #include "debug/debug_log.h"
 #include "debug/out.h"
+#include "device/mousew32.h"
 #include "font/fonts.h"
 #include "gfx/ali3d.h"
 #include "gui/animatingguibutton.h"
@@ -146,6 +147,7 @@ RoomStatus*croom=NULL;
 roomstruct thisroom;
 
 volatile int switching_away_from_game = 0;
+volatile bool switched_away = false;
 volatile char want_exit = 0, abort_engine = 0;
 GameDataVersion loaded_game_file_version = kGameVersion_Undefined;
 int frames_per_second=40;
@@ -2684,9 +2686,18 @@ int __GetLocationType(int xxx,int yyy, int allowHotspot0) {
     return winner;
 }
 
-void display_switch_out() {
+void display_switch_out()
+{
+    switched_away = true;
+    // Always unlock mouse when switching out from the game
+    Mouse::UnlockFromWindow();
+}
+
+void display_switch_out_suspend()
+{
     // this is only called if in SWITCH_PAUSE mode
     //debug_log("display_switch_out");
+    display_switch_out();
 
     switching_away_from_game++;
 
@@ -2711,7 +2722,18 @@ void display_switch_out() {
     switching_away_from_game--;
 }
 
-void display_switch_in() {
+void display_switch_in()
+{
+    switched_away = false;
+    // If auto lock option is set, lock mouse to the game window
+    if (usetup.mouse_auto_lock && usetup.windowed)
+        Mouse::TryLockToWindow();
+}
+
+void display_switch_in_resume()
+{
+    display_switch_in();
+
     for (int i = 0; i <= MAX_SOUND_CHANNELS; i++) {
         if ((channels[i] != NULL) && (channels[i]->done == 0)) {
             channels[i]->resume();

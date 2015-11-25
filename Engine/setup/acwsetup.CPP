@@ -13,16 +13,17 @@
 //=============================================================================
 
 #include <windows.h>
+#include <commctrl.h>
 #include <stdio.h>
 #include <io.h>
 #include <stdlib.h>
 #include "resource/resource.h"
 #include "ac/gamestructdefines.h"
 #include "gfx/gfxfilter.h"
+#include "main/config.h"
 #include "util/filestream.h"
 
-using AGS::Common::Stream;
-using namespace AGS; // FIXME later
+using namespace AGS::Common;
 
 #define AL_ID(a,b,c,d)     (((a)<<24) | ((b)<<16) | ((c)<<8) | (d))
 
@@ -36,8 +37,10 @@ using namespace AGS; // FIXME later
 #define MIDI_NONE             0 
 #define MIDI_WIN32MAPPER         AL_ID('W','3','2','M')
 
+#define MOUSE_SPEED_MIN     1
+#define MOUSE_SPEED_MAX     100
+
 extern "C" HWND allegro_wnd;
-extern int  INIreadint(const char*, const char*, int=0);
 extern void fgetstring_limit (char *, Stream *, int);
 extern char* ac_config_file;
 const char*setupstring, *enginever;
@@ -58,6 +61,7 @@ GFXFilter **filterList = NULL;
 const int specialFilterListIndex = 1;
 const char *specialFilterName = "Max nearest-neighbour filter";
 const char *specialFilterID = "max";
+ConfigTree wincfg;
 
 int get_filter_real_index(int list_index)
 {
@@ -87,7 +91,7 @@ const char *get_filter_id(int list_index)
 
 void update_resolution_texts(HWND hDlg) {
   
-  bool letterbox_by_design = INIreadint("misc", "letterbox", 0) > 0;
+  bool letterbox_by_design = INIreadint(wincfg, "misc", "letterbox") > 0;
   Size res_size = ResolutionTypeToSize(defaultRes, letterbox_by_design);
   int resx = res_size.Width;
   int resy = res_size.Height;
@@ -137,7 +141,7 @@ void populate_drop_down_with_filters(HWND hDlg)
   int selected_filter = 0;
   while (thisFilter != NULL) {
 
-    if ((idx != 0) && (INIreadint("disabled", thisFilter->GetFilterID(), 0) == 1)) {
+    if ((idx != 0) && (INIreadint(wincfg, "disabled", thisFilter->GetFilterID()) == 1)) {
       // this filter is disabled
       delete thisFilter;
       // remove from list of filters
@@ -197,6 +201,14 @@ void update_gfx_filter_box_enabled(HWND hDlg)
   update_resolution_texts(hDlg);
 }
 
+void update_mouse_speed_text(HWND hDlg)
+{
+  int slider_pos = SendDlgItemMessage(hDlg,IDC_MOUSESPEED, TBM_GETPOS, 0, 0);
+  float mouse_speed = (float)slider_pos / 10.f;
+  String text = mouse_speed == 1.f ? "Mouse speed: x 1.0 (Default)" : String::FromFormat("Mouse speed: x %0.1f", mouse_speed);
+  SendDlgItemMessage(hDlg, IDC_MOUSESPEED_TEXT, WM_SETTEXT, 0, (LPARAM)text.GetCStr());
+}
+
 void InitializeDialog(HWND hDlg) {
   struct _finddata_t c_file;
   long hFile;
@@ -249,6 +261,20 @@ void InitializeDialog(HWND hDlg) {
 
     _findclose( hFile );
   }
+
+  bool mouse_autolock = INIreadint(wincfg, "mouse", "auto_lock") > 0;
+  if (mouse_autolock)
+      SendDlgItemMessage(hDlg, IDC_MOUSE_AUTOLOCK, BM_SETCHECK, BST_CHECKED, 0);
+
+  SendDlgItemMessage(hDlg, IDC_MOUSESPEED, TBM_SETRANGE, (WPARAM)TRUE,
+      (LPARAM)MAKELONG(MOUSE_SPEED_MIN, MOUSE_SPEED_MAX));
+  float mouse_speed = INIreadfloat(wincfg, "mouse", "speed", 1.f);
+  if (mouse_speed <= 0.f)
+      mouse_speed = 1.f;
+  int slider_pos = (int)(mouse_speed * 10.f + .5f);
+  SendDlgItemMessage(hDlg,IDC_MOUSESPEED, TBM_SETPOS, (WPARAM)TRUE, (LPARAM)slider_pos);
+  update_mouse_speed_text(hDlg);
+
   SendDlgItemMessage(hDlg,IDC_COMBO4,CB_ADDSTRING,0,(LPARAM)"10 MB");
   SendDlgItemMessage(hDlg,IDC_COMBO4,CB_ADDSTRING,0,(LPARAM)"20 MB (default)");
   SendDlgItemMessage(hDlg,IDC_COMBO4,CB_ADDSTRING,0,(LPARAM)"50 MB");
@@ -296,16 +322,16 @@ void InitializeDialog(HWND hDlg) {
     SendDlgItemMessage(hDlg, IDC_REDUCESPR, BM_SETCHECK, BST_CHECKED,0);
 
   // if no speech pack, disable the checkbox
-  if (!Common::File::TestReadFile("speech.vox"))
+  if (!File::TestReadFile("speech.vox"))
     EnableWindow (GetDlgItem (hDlg, IDC_SPEECHPACK), FALSE);
 
-  if (INIreadint("disabled", "speechvox", 0) == 1)
+  if (INIreadint(wincfg, "disabled", "speechvox") == 1)
     EnableWindow (GetDlgItem (hDlg, IDC_SPEECHPACK), FALSE);
 
-  if (INIreadint("disabled", "16bit", 0) == 1)
+  if (INIreadint(wincfg, "disabled", "16bit") == 1)
     EnableWindow (GetDlgItem (hDlg, IDC_REDUCESPR), FALSE);
 
-  if (INIreadint("disabled", "filters", 0) == 1)
+  if (INIreadint(wincfg, "disabled", "filters") == 1)
     EnableWindow (GetDlgItem(hDlg, IDC_GFXFILTER), FALSE);
 
   RECT win_rect, client_rect;
@@ -492,11 +518,21 @@ LRESULT CALLBACK callback_settings(HWND hDlg, UINT message, WPARAM wParam, LPARA
           idx = SendDlgItemMessage(hDlg, IDC_GFXFILTER, CB_GETCURSEL, 0, 0);
           const char *filter_id = get_filter_id(idx);
           WritePrivateProfileString("misc", "gfxfilter", filter_id, ac_config_file);
+
+          bool mouse_autolock = SendDlgItemMessage(hDlg, IDC_MOUSE_AUTOLOCK, BM_GETCHECK, 0, 0) == BST_CHECKED;
+          WritePrivateProfileString("mouse", "auto_lock", mouse_autolock ? "1" : "0", ac_config_file);
+          int slider_pos = SendDlgItemMessage(hDlg,IDC_MOUSESPEED, TBM_GETPOS, 0, 0);
+          float mouse_speed = (float)slider_pos / 10.f;
+          sprintf(tbuf, "%0.1f", mouse_speed);
+          WritePrivateProfileString("mouse", "speed", tbuf, ac_config_file);
         }
 	EndDialog(hDlg, LOWORD(wParam));
  	return TRUE;
       }
       return FALSE;
+    case WM_HSCROLL:
+      update_mouse_speed_text(hDlg);
+      return TRUE;
     default: return FALSE;
     }
   return TRUE;
@@ -506,45 +542,45 @@ LRESULT CALLBACK callback_settings(HWND hDlg, UINT message, WPARAM wParam, LPARA
 int acwsetup(const char*vername, const char*enbuild) {
   setupstring = vername;
   enginever = enbuild;
-  if (Common::File::TestReadFile(ac_config_file)) {
-    curscrn=INIreadint("misc","screenres");
+  if (IniUtil::Read(ac_config_file, wincfg)) {
+    curscrn=INIreadint(wincfg, "misc","screenres");
     if (curscrn > 1)
       curscrn = 1;
-    defaultRes = (GameResolutionType)INIreadint ("misc", "defaultres", 0);
+    defaultRes = (GameResolutionType)INIreadint (wincfg, "misc", "defaultres");
     if (defaultRes < 1)
       defaultRes = kGameResolution_Default;
 
-    curdigi=INIreadint("sound","digiwinindx");
-    curmidi=INIreadint("sound","midiwinindx");
+    curdigi=INIreadint(wincfg, "sound","digiwinindx");
+    curmidi=INIreadint(wincfg, "sound","midiwinindx");
 
     if (curdigi < 0) curdigi=0;
     if (curdigi > 3) curdigi = 0;
     if (curmidi < 0) curmidi=0;
 
-    windowed = INIreadint("misc","windowed",0);
-    useletterbox = INIreadint("misc","prefer_letterbox", 1) != 0;
+    windowed = INIreadint(wincfg, "misc","windowed");
+    useletterbox = INIreadint(wincfg, "misc","prefer_letterbox") != 0;
 
-    reduce32to16 = INIreadint("misc","notruecolor",0);
+    reduce32to16 = INIreadint(wincfg, "misc","notruecolor");
     if (reduce32to16 < 0)
       reduce32to16 = 0;
 
-    gameColDep = INIreadint("misc", "gamecolordepth", 0);
+    gameColDep = INIreadint(wincfg, "misc", "gamecolordepth");
     if (gameColDep < 0)
       gameColDep = 0;
 
-    refresh = INIreadint("misc","refresh",0);
+    refresh = INIreadint(wincfg, "misc","refresh");
     if (refresh < 1)
       refresh = 0;
-    antialias = INIreadint("misc","antialias",0);
+    antialias = INIreadint(wincfg, "misc","antialias");
     if (antialias < 1)
       antialias = 0;
 
-    sideBorders = INIreadint("misc","prefer_sideborders", 1) != 0;
+    sideBorders = INIreadint(wincfg, "misc","prefer_sideborders") != 0;
 
-    int cacheval = INIreadint ("misc", "cachemax", 0);
+    int cacheval = INIreadint (wincfg, "misc", "cachemax");
     if (cacheval > 0)
       curmaxcache = cacheval;
-    curusespeech = INIreadint ("sound", "usespeech", 0);
+    curusespeech = INIreadint (wincfg, "sound", "usespeech");
     if (curusespeech < 0)
       curusespeech = 1;
 

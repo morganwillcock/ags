@@ -139,6 +139,12 @@ int engine_init_allegro()
             user_hint);
         return EXIT_NORMAL;
     }
+
+    // Setup allegro using constructed config string
+    String al_config_data = "[mouse]\n";
+    al_config_data.Append(String::FromFormat("mouse_accel_factor = %d\n", 0));
+    set_config_data(al_config_data, al_config_data.GetLength());
+
     return RETURN_CONTINUE;
 }
 
@@ -1474,6 +1480,10 @@ int initialize_engine(int argc,char*argv[])
     }
 
     SetMultitasking(0);
+
+    // If auto lock option is set, lock mouse to the game window
+    if (usetup.mouse_auto_lock && usetup.windowed)
+        Mouse::TryLockToWindow();
 
     engine_show_preload();
 
