@@ -43,8 +43,8 @@ namespace AGS.Editor.Components
             _guiController.RegisterIcon("StepMenuIcon", Resources.ResourceManager.GetIcon("menu_build_step-into.ico"));
             _guiController.RegisterIcon("StopMenuIcon", Resources.ResourceManager.GetIcon("menu_build_stop.ico"));
             _guiController.RegisterIcon("PauseMenuIcon", Resources.ResourceManager.GetIcon("menu_build_pause.ico"));
-			_guiController.RegisterIcon("RebuildAllMenuIcon", Resources.ResourceManager.GetIcon("menu_build_rebuild-files.ico"));
-			_guiController.RegisterIcon("SetupGameMenuIcon", Resources.ResourceManager.GetIcon("menu_build_gamesetup.ico"));
+            _guiController.RegisterIcon("RebuildAllMenuIcon", Resources.ResourceManager.GetIcon("menu_build_rebuild-files.ico"));
+            _guiController.RegisterIcon("SetupGameMenuIcon", Resources.ResourceManager.GetIcon("menu_build_gamesetup.ico"));
 
             _guiController.RegisterIcon("MenuIconBuildEXE", Resources.ResourceManager.GetIcon("menu_file_built-exe.ico"));
             _guiController.RegisterIcon("MenuIconTest", Resources.ResourceManager.GetIcon("menu_build_runwithout.ico"));
@@ -58,13 +58,16 @@ namespace AGS.Editor.Components
             debugCommands.Commands.Add(new MenuCommand(STOP_COMMAND, "&Stop", Keys.Shift | Keys.F5, "StopMenuIcon"));
             debugCommands.Commands.Add(MenuCommand.Separator);
             debugCommands.Commands.Add(new MenuCommand(COMPILE_GAME_COMMAND, "&Build EXE", Keys.F7, "MenuIconBuildEXE"));
-			debugCommands.Commands.Add(new MenuCommand(REBUILD_GAME_COMMAND, "Rebuild &all files", "RebuildAllMenuIcon"));
-			debugCommands.Commands.Add(new MenuCommand(SETUP_GAME_COMMAND, "Run game setu&p...", "SetupGameMenuIcon"));
+            debugCommands.Commands.Add(new MenuCommand(REBUILD_GAME_COMMAND, "Rebuild &all files", "RebuildAllMenuIcon"));
+            debugCommands.Commands.Add(new MenuCommand(SETUP_GAME_COMMAND, "Run game setu&p...", "SetupGameMenuIcon"));
             _guiController.AddMenuItems(this, debugCommands);
 
-            _guiController.SetMenuItemEnabled(this, STEP_INTO_COMMAND, false);
-            _guiController.SetMenuItemEnabled(this, PAUSE_COMMAND, false);
-            _guiController.SetMenuItemEnabled(this, STOP_COMMAND, false);
+            if (!Utilities.IsMonoRunning())
+            {
+                _guiController.SetMenuItemEnabled(this, STEP_INTO_COMMAND, false);
+                _guiController.SetMenuItemEnabled(this, PAUSE_COMMAND, false);
+                _guiController.SetMenuItemEnabled(this, STOP_COMMAND, false);
+            }
 
             MenuCommand buildIcon = new MenuCommand(COMPILE_GAME_COMMAND, "Build game EXE (F7)", "BuildIcon");
             MenuCommand runIcon = new MenuCommand(RUN_COMMAND, "Run (F5)", "RunIcon");
@@ -82,7 +85,11 @@ namespace AGS.Editor.Components
             Factory.ToolBarManager.AddGlobalItems(this, _debugToolbarCommands);
             Factory.ToolBarManager.UpdateItemEnabledStates(_debugToolbarCommands);
 
-            _agsEditor.Debugger.DebugStateChanged += new DebugController.DebugStateChangedHandler(Debugger_DebugStateChanged);
+            if (!Utilities.IsMonoRunning())
+            {
+                _agsEditor.Debugger.DebugStateChanged += new DebugController.DebugStateChangedHandler(Debugger_DebugStateChanged);
+            }
+
             _agsEditor.AttemptToSaveGame += new AGSEditor.AttemptToSaveGameHandler(_agsEditor_AttemptToSaveGame);
         }
 

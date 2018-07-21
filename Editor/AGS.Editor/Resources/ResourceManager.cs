@@ -13,7 +13,18 @@ namespace AGS.Editor.Resources
 
         public static Icon GetIcon(string fileName)
         {
-            return new Icon(typeof(ResourceManager), fileName);
+            Icon icon = null;
+
+            try
+            {
+                icon = new Icon(typeof(ResourceManager), fileName);
+            }
+            catch
+            {
+                Console.WriteLine("Failed to load icon from: {0}", fileName);
+            }
+
+            return icon;
         }
 
         public static Bitmap GetBitmap(string fileName)

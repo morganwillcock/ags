@@ -139,7 +139,12 @@ namespace AGS.Editor
             _componentController.AddComponent(new RoomsComponent(_guiController, _agsEditor));
             _componentController.AddComponent(new TranslationsComponent(_guiController, _agsEditor));
             _componentController.AddComponent(new SpeechComponent(_guiController, _agsEditor));
-            _componentController.AddComponent(new SourceControlComponent(_guiController, _agsEditor));
+
+            if (!Utilities.IsMonoRunning())
+            {
+                _componentController.AddComponent(new SourceControlComponent(_guiController, _agsEditor));
+            }
+
             _componentController.AddComponent(new WelcomeComponent(_guiController, _agsEditor));
             _componentController.AddComponent(new StatisticsSenderComponent(_guiController, _agsEditor));
         }

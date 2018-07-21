@@ -51,7 +51,11 @@ namespace AGS.Editor.Components
             commands.Commands.Add(new MenuCommand(COMMAND_SAVE_ROOM, "Save Room", Keys.Control | Keys.R, "MenuIconSaveRoom"));
             _guiController.AddMenuItems(this, commands);
 
-			_nativeProxy = Factory.NativeProxy;
+            if (!Utilities.IsMonoRunning())
+            {
+                _nativeProxy = Factory.NativeProxy;
+            }
+
             _guiController.ProjectTree.AddTreeRoot(this, TOP_LEVEL_COMMAND_ID, "Rooms", "RoomsIcon");
             _guiController.OnZoomToFile += new GUIController.ZoomToFileHandler(GUIController_OnZoomToFile);
             _guiController.OnGetScript += new GUIController.GetScriptHandler(GUIController_OnGetScript);

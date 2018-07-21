@@ -181,7 +181,7 @@ namespace AGS.Editor
 
         public string TemplatesDirectory
         {
-            get { return Path.Combine(this.EditorDirectory, TEMPLATES_DIRECTORY_NAME); }
+            get { return Path.Combine(Utilities.IsMonoRunning() ? Environment.GetFolderPath(Environment.SpecialFolder.Personal) : this.EditorDirectory, TEMPLATES_DIRECTORY_NAME); }
         }
 
         public string GameDirectory
@@ -237,19 +237,18 @@ namespace AGS.Editor
         public void DoEditorInitialization()
         {
             _game = new Game();
-            _sourceControl = new SourceControlProvider();
 
             if (!Utilities.IsMonoRunning())
             {
+                _sourceControl = new SourceControlProvider();
                 _engineComms = new NamedPipesEngineCommunication();
                 _debugger = new DebugController(_engineComms);
                 _debugger.BreakAtLocation += new DebugController.BreakAtLocationHandler(_debugger_BreakAtLocation);
+                Factory.NativeProxy.NewGameLoaded(Factory.AGSEditor.CurrentGame);
             }
 
             _builtInScriptHeader = new Script(BUILT_IN_HEADER_FILE_NAME, Resources.ResourceManager.GetResourceAsString("agsdefns.sh"), true);
             AutoComplete.ConstructCache(_builtInScriptHeader);
-
-            Factory.NativeProxy.NewGameLoaded(Factory.AGSEditor.CurrentGame);
         }
 
         public void Dispose()
