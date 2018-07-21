@@ -24,7 +24,12 @@ namespace AGS.Editor
             _agsEditor = Factory.AGSEditor;
             _guiController = Factory.GUIController;
             _componentController = Factory.ComponentController;
-            _nativeProxy = Factory.NativeProxy;
+
+            if (!Utilities.IsMonoRunning())
+            {
+                _nativeProxy = Factory.NativeProxy;
+            }
+
             _pluginEditorController = new AGSEditorController(_componentController, _agsEditor, _guiController);
 
             _events.GameLoad += new EditorEvents.GameLoadHandler(_events_GameLoad);

@@ -114,7 +114,7 @@ namespace AGS.Editor
         private ISourceControlProvider _sourceControl = null;
         private AppSettings _applicationSettings = new AppSettings();
         private Tasks _tasks = new Tasks();
-        private IEngineCommunication _engineComms = new NamedPipesEngineCommunication();
+        private IEngineCommunication _engineComms;
         private DebugController _debugger;
 		private bool _applicationStarted = false;
         private FileSystemWatcher _fileWatcher = null;
@@ -238,8 +238,13 @@ namespace AGS.Editor
         {
             _game = new Game();
             _sourceControl = new SourceControlProvider();
-            _debugger = new DebugController(_engineComms);
-            _debugger.BreakAtLocation += new DebugController.BreakAtLocationHandler(_debugger_BreakAtLocation);
+
+            if (!Utilities.IsMonoRunning())
+            {
+                _engineComms = new NamedPipesEngineCommunication();
+                _debugger = new DebugController(_engineComms);
+                _debugger.BreakAtLocation += new DebugController.BreakAtLocationHandler(_debugger_BreakAtLocation);
+            }
 
             _builtInScriptHeader = new Script(BUILT_IN_HEADER_FILE_NAME, Resources.ResourceManager.GetResourceAsString("agsdefns.sh"), true);
             AutoComplete.ConstructCache(_builtInScriptHeader);
@@ -250,7 +255,11 @@ namespace AGS.Editor
         public void Dispose()
         {
             CloseLockFile();
-            _debugger.EditorShutdown();
+
+            if (!Utilities.IsMonoRunning())
+            {
+                _debugger.EditorShutdown();
+            }
         }
 
         private void _debugger_BreakAtLocation(DebugCallStack callStack)
