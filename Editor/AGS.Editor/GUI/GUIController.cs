@@ -861,10 +861,15 @@ namespace AGS.Editor
 
         public bool ShowWelcomeScreen()
         {
-            if (System.Environment.OSVersion.Platform != PlatformID.Win32NT)
-			{
-				this.ShowMessage("You are running AGS on a computer with Windows 98 or Windows ME. AGS is no longer supported on these operating systems. You are STRONGLY ADVISED to run the AGS Editor on Windows 2000, XP or higher.", MessageBoxIcon.Warning);
-			}
+            switch(Environment.OSVersion.Platform)
+            {
+                case PlatformID.Win32NT:
+                case PlatformID.Unix:
+                    break;
+                default:
+                    this.ShowMessage("You are running AGS on an unsupported platform", MessageBoxIcon.Warning);
+                    break;
+            }
 
             if (!VerifyTemplatesDirectoryExists())
             {
