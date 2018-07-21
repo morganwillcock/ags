@@ -90,7 +90,8 @@ namespace AGS.Editor
             this.mainContainer.Location = new System.Drawing.Point(0, 51);
             this.mainContainer.Name = "mainContainer";
             this.mainContainer.DocumentStyle = WeifenLuo.WinFormsUI.Docking.DocumentStyle.DockingMdi;
-            this.mainContainer.Size = new System.Drawing.Size(761, 441);            
+            this.mainContainer.Size = new System.Drawing.Size(761, 441);
+            this.mainContainer.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             dockPanelGradient1.EndColor = System.Drawing.SystemColors.ControlLight;
             dockPanelGradient1.StartColor = System.Drawing.SystemColors.ControlLight;
             autoHideStripSkin1.DockStripGradient = dockPanelGradient1;
@@ -136,7 +137,7 @@ namespace AGS.Editor
             dockPaneStripToolWindowGradient1.InactiveTabGradient = tabGradient7;
             dockPaneStripSkin1.ToolWindowGradient = dockPaneStripToolWindowGradient1;
             dockPanelSkin1.DockPaneStripSkin = dockPaneStripSkin1;            
-            this.mainContainer.Skin = dockPanelSkin1;
+            //this.mainContainer.Theme = dockPanelSkin1;
             this.mainContainer.TabIndex = 0;             
             // 
             // pnlCallStack
