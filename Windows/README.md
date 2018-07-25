@@ -125,3 +125,8 @@ Depending on the version of MSVS you are using you need to setup paths to compil
 If you are working with AGS.Editor.NoNative solution, then you do not have to make any of C++ libraries at all, but you will have to get compatible compiled AGS.Native.dll somewhere. For starters we suggest taking one from the latest release of AGS.
 
 In either case you also need to download [irrKlang assembly pack](https://www.ambiera.com/irrklang/downloads.html) and put irrKlang.NET4.dll and ikpMP3.dll into Editor/References subdirectory.
+
+### Running unit tests
+- Visual Studio's built-in test runner
+- `Solutions\packages\xunit.runner.console.<VERSION>\tools\<.NET VERSION>\xunit.console.exe Editor\Tests\bin\Debug\Tests.dll`
+- `mono Solutions/packages/xunit.runner.console.<VERSION>/tools/<.NET VERSION>/xunit.console.exe Editor/Tests/bin/Debug/Tests.dll`
