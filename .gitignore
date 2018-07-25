@@ -68,7 +68,8 @@ Editor/AGS.Native/Release
 Editor/AGS.Types/bin
 Editor/AGS.Types/obj
 Editor/References/*.dll
-
+Editor/Tests/bin
+Editor/Tests/obj
 
 # Engine output and temporary files
 # for Linux and Windows build

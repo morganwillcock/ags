@@ -72,8 +72,8 @@
     <Reference Include="irrKlang.NET4">
       <HintPath>..\References\irrKlang.NET4.dll</HintPath>
     </Reference>
-    <Reference Include="Newtonsoft.Json, Version=10.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>..\..\Solutions\packages\Newtonsoft.Json.10.0.3\lib\net40\Newtonsoft.Json.dll</HintPath>
+    <Reference Include="Newtonsoft.Json, Version=11.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\..\Solutions\packages\Newtonsoft.Json.11.0.2\lib\net40\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
@@ -81,7 +81,7 @@
     <Reference Include="System.Web" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
-    <Reference Include="WeifenLuo.WinFormsUI.Docking">
+    <Reference Include="WeifenLuo.WinFormsUI.Docking, Version=3.0.4.0, Culture=neutral, PublicKeyToken=5cded1a1a0a7b481, processorArchitecture=MSIL">
       <HintPath>..\..\Solutions\packages\DockPanelSuite.3.0.4\lib\net40\WeifenLuo.WinFormsUI.Docking.dll</HintPath>
     </Reference>
   </ItemGroup>
@@ -334,7 +334,6 @@
       <SubType>Designer</SubType>
     </None>
     <None Include="app.manifest" />
-    <None Include="packages.config" />
     <EmbeddedResource Include="Resources\localvar.xpm" />
     <EmbeddedResource Include="Resources\methodext.xpm" />
     <EmbeddedResource Include="Resources\setup.dat" />
@@ -355,6 +354,7 @@
     <EmbeddedResource Include="Resources\AGSFNT2.WFN" />
     <Compile Include="Resources\ResourceManager.cs" />
     <Compile Include="Utils\AlternateStreams.cs" />
+    <Compile Include="Utils\IniFile.cs" />
     <Compile Include="Utils\SourceControlProvider.cs" />
     <Compile Include="GUI\TabbedDocumentManager.cs">
     </Compile>
@@ -684,6 +684,7 @@
     <None Include="acsprset.spr">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Include="packages.config" />
     <None Include="Resources\error.ico" />
     <EmbeddedResource Include="Resources\__DialogScripts.asc" />
     <EmbeddedResource Include="Resources\eventlogError.ico" />

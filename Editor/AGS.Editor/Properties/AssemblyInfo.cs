@@ -21,3 +21,6 @@ using System.Runtime.InteropServices;
 
 [assembly: AssemblyVersion(AGS.Types.Version.AGS_EDITOR_VERSION)]
 [assembly: AssemblyFileVersion(AGS.Types.Version.AGS_EDITOR_VERSION)]
+
+// Make internals available to the test project
+[assembly: InternalsVisibleTo("Tests")]
