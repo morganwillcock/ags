@@ -286,7 +286,11 @@ namespace AGS.Editor
 
         public void RegisterIcon(string key, Icon icon)
         {
-            _imageList.Images.Add(key, icon);
+            // FIXME: can be null on mono
+            if (icon != null)
+            {
+                _imageList.Images.Add(key, icon);
+            }
         }
 
         public void RegisterImage(string key, Image image)
