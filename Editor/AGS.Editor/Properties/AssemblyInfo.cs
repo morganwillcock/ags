@@ -23,4 +23,4 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyFileVersion(AGS.Types.Version.AGS_EDITOR_VERSION)]
 
 // Make internals available to the test project
-[assembly: InternalsVisibleTo("Tests")]
+[assembly: InternalsVisibleTo("Tests, PublicKey=00240000048000009400000006020000002400005253413100040000010001001928fff7aae4735931d94028240c068f6e48c162de51a23e60d1fbd702acfa22c0e7fe476c578147311cfc31eafc0eb3439833376206013fde5518129df439eff4531dc45b2222605a26815d6da885e19bcead6bcc5e644807e56f31b07cf25f075ecb3b47cb7acba7cc0373583a61fc1e540a1ab62922e8cd50d16de50ba6b2")]
