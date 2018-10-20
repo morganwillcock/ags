@@ -229,11 +229,7 @@ namespace Tests
             ini.SetValue("My Section", "", "");
             ini.Commit();
 
-            ini = new IniFile(writepath);
-            string expected = "";
-            string actual = ini.ToString();
-
-            Assert.Equal(expected, actual);
+            Assert.True(new FileInfo(writepath).Length == 0);
             File.Delete(writepath);
         }
 
@@ -248,11 +244,35 @@ namespace Tests
             ini.DeleteKey("My Section", "My Key");
             ini.Commit();
 
-            ini = new IniFile(writepath);
-            string expected = "";
-            string actual = ini.ToString();
+            Assert.True(new FileInfo(writepath).Length == 0);
+            File.Delete(writepath);
+        }
 
-            Assert.Equal(expected, actual);
+        [Fact]
+        public void NewFileIsEmpty()
+        {
+            string writepath = Path.Combine(temppath, Path.GetRandomFileName());
+            IniFile ini;
+
+            ini = new IniFile(writepath);
+            ini.Commit();
+
+            Assert.True(new FileInfo(writepath).Length == 0);
+            File.Delete(writepath);
+        }
+
+        [Fact]
+        public void NewFileIsEmptyForEmptiedSection()
+        {
+            string writepath = Path.Combine(temppath, Path.GetRandomFileName());
+            IniFile ini;
+
+            ini = new IniFile(writepath);
+            ini.SetValue("My Section", "My Key", "My Value");
+            ini.DeleteKey("My Section", "My Key");
+            ini.Commit();
+
+            Assert.True(new FileInfo(writepath).Length == 0);
             File.Delete(writepath);
         }
     }
