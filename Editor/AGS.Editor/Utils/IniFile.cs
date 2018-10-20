@@ -175,6 +175,8 @@ namespace AGS.Editor.Utils
 
         public void Commit()
         {
+            FileInfo fileinfo = new FileInfo(filepath);
+            fileinfo.Directory.Create();
             File.WriteAllText(filepath, ToString());
         }
     }
