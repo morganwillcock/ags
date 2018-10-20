@@ -120,6 +120,48 @@ namespace AGS.Editor.Utils
             return ret;
         }
 
+        public bool SetValue(string section, string key, string value)
+        {
+            bool ret = false;
+
+            if (!String.IsNullOrWhiteSpace(section) && !String.IsNullOrWhiteSpace(key))
+            {
+                if (!data.ContainsKey(section))
+                {
+                    data.Add(section, new Dictionary<string, string>());
+                }
+
+                data[section][key] = value;
+                ret = true;
+            }
+
+            return ret;
+        }
+
+        public bool DeleteSection(string section)
+        {
+            bool ret = false;
+
+            if (data.ContainsKey(section))
+            {
+                ret = data.Remove(section);
+            }
+
+            return ret;
+        }
+
+        public bool DeleteKey(string section, string key)
+        {
+            bool ret = false;
+
+            if (data.ContainsKey(section) && data[section].ContainsKey(key))
+            {
+                ret = data[section].Remove(key);
+            }
+
+            return ret;
+        }
+
         public void Commit()
         {
             File.WriteAllText(filepath, ToString());
