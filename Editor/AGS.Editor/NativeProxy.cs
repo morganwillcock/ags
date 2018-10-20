@@ -18,10 +18,6 @@ namespace AGS.Editor
         public static extern bool FreeLibrary(IntPtr hModule);
         [DllImport("user32.dll")]
         public static extern bool SetForegroundWindow(IntPtr hWnd);
-		[DllImport("kernel32.dll")]
-		public static extern long WritePrivateProfileString(string section, string key, string val, string filePath);
-		[DllImport("kernel32.dll")]
-		public static extern int GetPrivateProfileString(string section, string key, string def, System.Text.StringBuilder retVal, int size, string filePath);
 
         public const uint WM_MOUSEACTIVATE = 0x21;
         public const uint MA_ACTIVATE = 1;

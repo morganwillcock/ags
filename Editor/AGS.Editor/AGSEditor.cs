@@ -11,6 +11,7 @@ using AGS.CScript.Compiler;
 using AGS.Types;
 using AGS.Types.Interfaces;
 using AGS.Editor.Preferences;
+using AGS.Editor.Utils;
 
 namespace AGS.Editor
 {
@@ -1425,9 +1426,10 @@ namespace AGS.Editor
             return result;
         }
 
-        private void WriteCustomPathToConfig(string section, string key, string cfg_path, bool use_custom_path, string custom_path)
+        private string GetCustomPath(bool use_custom_path, string custom_path)
         {
             string path_value = ""; // no value
+
             if (use_custom_path)
             {
                 if (String.IsNullOrEmpty(custom_path))
@@ -1435,7 +1437,8 @@ namespace AGS.Editor
                 else
                     path_value = custom_path;
             }
-            NativeProxy.WritePrivateProfileString(section, key, path_value, cfg_path);
+
+            return path_value;
         }
 
         private static string GetGfxDriverConfigID(GraphicsDriver driver)
@@ -1467,61 +1470,65 @@ namespace AGS.Editor
         /// This updates only values that strongly depend on game properties,
         /// and does not affect user settings.
         /// </summary>
-		public void WriteConfigFile(string outputDir)
-		{
+        public void WriteConfigFile(string outputDir)
+        {
             string configFilePath = Path.Combine(outputDir, CONFIG_FILE_NAME);
+            IniFile ini = new IniFile(configFilePath);
 
-			if (!File.Exists(configFilePath))
-			{
-				// Write default values for sound drivers
-				NativeProxy.WritePrivateProfileString("sound", "digiid", "-1", configFilePath);
-				NativeProxy.WritePrivateProfileString("sound", "midiid", "-1", configFilePath);
-				NativeProxy.WritePrivateProfileString("sound", "digiwin", "-1", configFilePath);
-				NativeProxy.WritePrivateProfileString("sound", "midiwin", "-1", configFilePath);
-				NativeProxy.WritePrivateProfileString("sound", "digiindx", "0", configFilePath);
-				NativeProxy.WritePrivateProfileString("sound", "midiindx", "0", configFilePath);
-				NativeProxy.WritePrivateProfileString("sound", "digiwinindx", "0", configFilePath);
-				NativeProxy.WritePrivateProfileString("sound", "midiwinindx", "0", configFilePath);
-			}
+            if (ini.IsEmpty())
+            {
+                // Write default values for sound drivers
+                ini.SetValue("sound", "digiid", "-1");
+                ini.SetValue("sound", "midiid", "-1");
+                ini.SetValue("sound", "digiwin", "-1");
+                ini.SetValue("sound", "midiwin", "-1");
+                ini.SetValue("sound", "digiindx", "0");
+                ini.SetValue("sound", "midiindx", "0");
+                ini.SetValue("sound", "digiwinindx", "0");
+                ini.SetValue("sound", "midiwinindx", "0");
+            }
 
             if (_game.Settings.LetterboxMode)
             {
-                NativeProxy.WritePrivateProfileString("misc", "defaultres", ((int)_game.Settings.LegacyLetterboxResolution).ToString(), configFilePath);
-                NativeProxy.WritePrivateProfileString("misc", "letterbox", "1", configFilePath);
-                NativeProxy.WritePrivateProfileString("misc", "game_width", null, configFilePath);
-                NativeProxy.WritePrivateProfileString("misc", "game_height", null, configFilePath);
+                ini.SetValue("misc", "defaultres", ((int)_game.Settings.LegacyLetterboxResolution).ToString());
+                ini.SetValue("misc", "letterbox", "1");
+                ini.DeleteKey("misc", "game_width");
+                ini.DeleteKey("misc", "game_height");
             }
             else
             {
-                NativeProxy.WritePrivateProfileString("misc", "defaultres", null, configFilePath);
-                NativeProxy.WritePrivateProfileString("misc", "letterbox", null, configFilePath);
-                NativeProxy.WritePrivateProfileString("misc", "game_width", _game.Settings.CustomResolution.Width.ToString(), configFilePath);
-                NativeProxy.WritePrivateProfileString("misc", "game_height", _game.Settings.CustomResolution.Height.ToString(), configFilePath);
+                ini.DeleteKey("misc", "defaultres");
+                ini.DeleteKey("misc", "letterbox");
+                ini.SetValue("misc", "game_width", _game.Settings.CustomResolution.Width.ToString());
+                ini.SetValue("misc", "game_height", _game.Settings.CustomResolution.Height.ToString());
             }
-			NativeProxy.WritePrivateProfileString("misc", "gamecolordepth", (((int)_game.Settings.ColorDepth) * 8).ToString(), configFilePath);
 
-            NativeProxy.WritePrivateProfileString("graphics", "driver", GetGfxDriverConfigID(_game.DefaultSetup.GraphicsDriver), configFilePath);
-            NativeProxy.WritePrivateProfileString("graphics", "windowed", _game.DefaultSetup.Windowed ? "1" : "0", configFilePath);
-            NativeProxy.WritePrivateProfileString("graphics", "screen_def", _game.DefaultSetup.Windowed ? "scaling" : "max", configFilePath);
+            ini.SetValue("misc", "gamecolordepth", (((int)_game.Settings.ColorDepth) * 8).ToString());
+            ini.SetValue("graphics", "driver", GetGfxDriverConfigID(_game.DefaultSetup.GraphicsDriver));
+            ini.SetValue("graphics", "windowed", _game.DefaultSetup.Windowed ? "1" : "0");
+            ini.SetValue("graphics", "screen_def", _game.DefaultSetup.Windowed ? "scaling" : "max");
+            ini.SetValue("graphics", "game_scale_fs", MakeGameScalingConfig(_game.DefaultSetup.FullscreenGameScaling, 0));
+            ini.SetValue("graphics", "game_scale_win", MakeGameScalingConfig(_game.DefaultSetup.GameScaling, _game.DefaultSetup.GameScalingMultiplier));
+            ini.SetValue("graphics", "filter", _game.DefaultSetup.GraphicsFilter);
+            ini.SetValue("graphics", "vsync", _game.DefaultSetup.VSync ? "1" : "0");
+            ini.SetValue("misc", "antialias", _game.DefaultSetup.AAScaledSprites ? "1" : "0");
+            ini.SetValue("misc", "notruecolor", _game.DefaultSetup.DowngradeTo16bit ? "1" : "0");
 
-            NativeProxy.WritePrivateProfileString("graphics", "game_scale_fs", MakeGameScalingConfig(_game.DefaultSetup.FullscreenGameScaling, 0), configFilePath);
-            NativeProxy.WritePrivateProfileString("graphics", "game_scale_win", MakeGameScalingConfig(_game.DefaultSetup.GameScaling, _game.DefaultSetup.GameScalingMultiplier), configFilePath);
-
-            NativeProxy.WritePrivateProfileString("graphics", "filter", _game.DefaultSetup.GraphicsFilter, configFilePath);
-            NativeProxy.WritePrivateProfileString("graphics", "vsync", _game.DefaultSetup.VSync ? "1" : "0", configFilePath);
-            NativeProxy.WritePrivateProfileString("misc", "antialias", _game.DefaultSetup.AAScaledSprites ? "1" : "0", configFilePath);
-            NativeProxy.WritePrivateProfileString("misc", "notruecolor", _game.DefaultSetup.DowngradeTo16bit ? "1" : "0", configFilePath);
             bool render_at_screenres = _game.Settings.RenderAtScreenResolution == RenderAtScreenResolution.UserDefined ?
                 _game.DefaultSetup.RenderAtScreenResolution : _game.Settings.RenderAtScreenResolution == RenderAtScreenResolution.True;
-            NativeProxy.WritePrivateProfileString("graphics", "render_at_screenres", render_at_screenres ? "1" : "0", configFilePath);
-            NativeProxy.WritePrivateProfileString("language", "translation", _game.DefaultSetup.Translation, configFilePath);
-            NativeProxy.WritePrivateProfileString("mouse", "auto_lock", _game.DefaultSetup.AutoLockMouse ? "1" : "0", configFilePath);
-            NativeProxy.WritePrivateProfileString("mouse", "speed", _game.DefaultSetup.MouseSpeed.ToString(CultureInfo.InvariantCulture), configFilePath);
+
+            ini.SetValue("graphics", "render_at_screenres", render_at_screenres ? "1" : "0");
+            ini.SetValue("language", "translation", _game.DefaultSetup.Translation);
+            ini.SetValue("mouse", "auto_lock", _game.DefaultSetup.AutoLockMouse ? "1" : "0");
+            ini.SetValue("mouse", "speed", _game.DefaultSetup.MouseSpeed.ToString(CultureInfo.InvariantCulture));
+            ini.SetValue("misc", "titletext", _game.DefaultSetup.TitleText);
+            ini.SetValue("misc", "user_data_dir", GetCustomPath(_game.DefaultSetup.UseCustomSavePath, _game.DefaultSetup.CustomSavePath));
+            ini.SetValue("misc", "shared_data_dir", GetCustomPath(_game.DefaultSetup.UseCustomAppDataPath, _game.DefaultSetup.CustomAppDataPath));
+
             // Note: sprite cache size is written in KB (while we have it in MB on the editor pane)
-            NativeProxy.WritePrivateProfileString("misc", "cachemax", (_game.DefaultSetup.SpriteCacheSize * 1024).ToString(), configFilePath);
-            WriteCustomPathToConfig("misc", "user_data_dir", configFilePath, _game.DefaultSetup.UseCustomSavePath, _game.DefaultSetup.CustomSavePath);
-            WriteCustomPathToConfig("misc", "shared_data_dir", configFilePath, _game.DefaultSetup.UseCustomAppDataPath, _game.DefaultSetup.CustomAppDataPath);
-            NativeProxy.WritePrivateProfileString("misc", "titletext", _game.DefaultSetup.TitleText, configFilePath);
+            ini.SetValue("misc", "cachemax", (_game.DefaultSetup.SpriteCacheSize * 1024).ToString());
+
+            ini.Commit();
         }
 
 		private void BackupCurrentGameFile()
