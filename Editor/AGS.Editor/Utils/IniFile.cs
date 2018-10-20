@@ -88,11 +88,16 @@ namespace AGS.Editor.Utils
 
             foreach (string section in data.Keys)
             {
+                if (builder.Length > 0)
+                {
+                    builder.AppendLine("");
+                }
+
                 builder.AppendLine(String.Format("[{0}]", section));
 
                 foreach (string key in data[section].Keys)
                 {
-                    builder.AppendLine(String.Format("{0} = {1}", key, data[section][key]));
+                    builder.AppendLine(String.Format("{0}={1}", key, data[section][key]));
                 }
             }
 
@@ -113,6 +118,11 @@ namespace AGS.Editor.Utils
             }
 
             return ret;
+        }
+
+        public void Commit()
+        {
+            File.WriteAllText(filepath, ToString());
         }
     }
 }
