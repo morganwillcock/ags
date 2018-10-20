@@ -275,6 +275,19 @@ namespace Tests
             Assert.True(new FileInfo(writepath).Length == 0);
             File.Delete(writepath);
         }
+
+        [Fact]
+        public void NewFileCreatesPath()
+        {
+            string writepath = Path.Combine(temppath, Path.GetRandomFileName(), Path.GetRandomFileName());
+            IniFile ini;
+
+            ini = new IniFile(writepath);
+            ini.Commit();
+
+            Assert.True(File.Exists(writepath));
+            File.Delete(writepath);
+        }
     }
 }
 
