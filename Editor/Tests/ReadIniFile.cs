@@ -17,5 +17,14 @@ namespace Tests
             string actual = ini.GetValue("misc", "titletext");
             Assert.Equal(expected, actual);
         }
+
+        [Fact]
+        public void GetEmptyValue()
+        {
+            IniFile ini = new IniFile(filename);
+            string expected = "";
+            string actual = ini.GetValue("misc", "user_data_dir");
+            Assert.Equal(expected, actual);
+        }
     }
 }
