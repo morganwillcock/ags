@@ -88,6 +88,12 @@ namespace AGS.Editor.Utils
 
             foreach (string section in data.Keys)
             {
+                if (data[section].Count == 0)
+                {
+                    // don't write empty sections
+                    continue;
+                }
+
                 if (builder.Length > 0)
                 {
                     builder.AppendLine("");
@@ -160,6 +166,11 @@ namespace AGS.Editor.Utils
             }
 
             return ret;
+        }
+
+        public bool IsEmpty()
+        {
+            return data.Count == 0;
         }
 
         public void Commit()
