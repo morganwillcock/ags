@@ -26,6 +26,24 @@ namespace Tests
         }
 
         [Fact]
+        public void GetBadValue()
+        {
+            IniFile ini = new IniFile(filename);
+            string expected = "";
+            string actual = ini.GetValue("misc", "no exist");
+            Assert.Equal(expected, actual);
+        }
+
+        [Fact]
+        public void GetBadSection()
+        {
+            IniFile ini = new IniFile(filename);
+            string expected = "";
+            string actual = ini.GetValue("no exist", "");
+            Assert.Equal(expected, actual);
+        }
+
+        [Fact]
         public void DumpFile()
         {
             IniFile ini = new IniFile(filename);
