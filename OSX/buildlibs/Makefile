@@ -6,14 +6,14 @@ PREFIX:=$(shell pwd)/opt
 BUILD:=$(shell pwd)/build
 PKG_CONFIG_PATH:=${PREFIX}/lib/pkgconfig
 export PKG_CONFIG_PATH
-PLAT_FLAGS:=-mmacosx-version-min=10.7 -arch i386 -arch x86_64
+PLAT_FLAGS:=-mmacosx-version-min=10.9 -arch x86_64
 	
 .PHONY: libs prepare lua freetype ogg vorbis theora allegro dumb install
 
 libs: lua freetype ogg vorbis theora allegro dumb
 
 install: libs
-	rm -rf ../lib
+	rm -rf ../lib/*.a
 	rm -rf ../include
 	mkdir -p ../lib
 	cp $(PREFIX)/lib/*.a ../lib
@@ -78,7 +78,7 @@ theora: prepare ogg vorbis
 		make install
 
 # - you can add `-DCMAKE_BUILD_TYPE=Debug` to the cmake options but remember it will produce the file `liballeg-debug.a`
-# - to update patch: git diff 4.4.2..osx-update > ../ags/OSX/patches/allegro-4.4.2.patch
+# - to update patch: git diff 4.4.2..osx-update-2018 > ../ags/OSX/patches/allegro-4.4.2.patch
 allegro: prepare
 	rm -rf $(BUILD)/allegro-4.4.2
 	tar xf $(LIBSRCDIR)/allegro-4.4.2.tar.gz -C $(BUILD)
@@ -87,8 +87,8 @@ allegro: prepare
 		mkdir -p build && \
 		pushd build && \
 		cmake \
-		'-DCMAKE_OSX_ARCHITECTURES=x86_64;i386' \
-		-D CMAKE_OSX_DEPLOYMENT_TARGET=10.7 \
+		'-DCMAKE_OSX_ARCHITECTURES=x86_64' \
+		-D CMAKE_OSX_DEPLOYMENT_TARGET=10.9 \
 		-D SHARED=off \
 		-D WANT_ALLEGROGL=off -D WANT_LOADPNG=off -D WANT_LOGG=off -D WANT_JPGALLEG=off -D WANT_EXAMPLES=off -D WANT_TOOLS=off -D WANT_TESTS=off \
 		-D WANT_DOCS=off \
@@ -102,7 +102,7 @@ include make/unix.inc
 ALL_TARGETS := core core-headers
 ALL_TARGETS += allegro allegro-headers
 PREFIX := $(PREFIX)
-PLAT_CFLAGS := -mmacosx-version-min=10.7 -arch i386 -arch x86_64 -I\$(PREFIX)/include
+PLAT_CFLAGS := -mmacosx-version-min=10.9 -arch x86_64 -I\$(PREFIX)/include
 endef
 export DUMB_CONF
 
