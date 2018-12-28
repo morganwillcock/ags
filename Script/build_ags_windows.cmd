@@ -1,6 +1,8 @@
 @echo off
 setlocal enabledelayedexpansion
 
+echo Build environment: & set
+
 set AGS=%SYSTEMDRIVE%\AGS
 set CACHE=%AGS%\Cache
 set BUILD=%AGS%\Build
