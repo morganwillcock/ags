@@ -137,12 +137,13 @@ for /l %%n in (0,1,3) do (
 	popd
 )
 
-if not defined VCTargetsPath (
-	echo.
-	echo Build environment variables are not set!
-	echo re-run from Visual C++ build command prompt
-	goto :END
-)
+rem THIS ENV IS NOT SET ON AZURE FOR SOME REASON
+rem if not defined VCTargetsPath (
+rem 	echo.
+rem 	echo Build environment variables are not set!
+rem 	echo re-run from Visual C++ build command prompt
+rem 	goto :END
+rem )
 
 set UseEnv=true
 set INCLUDE=%BUILD%\OpenGL;%BUILD%\lib-allegro\include;%BUILD%\lib-allegro\build\VS2015\include;%INCLUDE%
