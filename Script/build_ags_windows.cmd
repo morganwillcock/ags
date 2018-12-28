@@ -29,7 +29,7 @@ if not exist %WGET% (
 	if not exist %WGET% exit /b 1
 )
 
-set DOWNLOADER=%WGET% --no-check-certificate -N -P %CACHE%
+set DOWNLOADER=%WGET% --no-check-certificate --quiet -N -P %CACHE%
 
 set INSTALL[0][name]=Git version 2.17.0
 set INSTALL[0][version]=*
