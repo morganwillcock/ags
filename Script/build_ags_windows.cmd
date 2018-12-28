@@ -9,7 +9,6 @@ set BUILD=%AGS%\Build
 set FCIV=%AGS%\fciv.exe
 set WGET=%AGS%\wget.exe
 set BITSADMIN=bitsadmin /transfer bootstrap /download /priority FOREGROUND
-set GIT="C:\Program Files (x86)\Git\bin\git.exe"
 set SEVENZIP="C:\Program Files (x86)\7-Zip\7z.exe"
 set MSBUILD="C:\Program Files (x86)\MSBuild\14.0\Bin\MSBuild.exe"
 set UNINSTALL=HKLM\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall
@@ -33,37 +32,31 @@ if not exist %WGET% (
 
 set DOWNLOADER=%WGET% --no-check-certificate --quiet -N -P %CACHE%
 
-set INSTALL[0][name]=Git version 2.17.0
+set INSTALL[0][name]=7-Zip 18.05
 set INSTALL[0][version]=*
-set INSTALL[0][url]=https://github.com/git-for-windows/git/releases/download/v2.17.0.windows.1/Git-2.17.0-32-bit.exe
-set INSTALL[0][md5]=c79a1404bea9c99256a5252d0d782089
-set INSTALL[0][cmd]=start /wait %CACHE%\Git-2.17.0-32-bit.exe /VERYSILENT /NORESTART /SP-
+set INSTALL[0][url]=https://www.7-zip.org/a/7z1805.msi
+set INSTALL[0][md5]=83b2e31c6534de4b119ef32c7ab97773
+set INSTALL[0][cmd]=msiexec /i %CACHE%\7z1805.msi /qb
 
-set INSTALL[1][name]=7-Zip 18.05
-set INSTALL[1][version]=*
-set INSTALL[1][url]=https://www.7-zip.org/a/7z1805.msi
-set INSTALL[1][md5]=83b2e31c6534de4b119ef32c7ab97773
-set INSTALL[1][cmd]=msiexec /i %CACHE%\7z1805.msi /qb
+set INSTALL[1][name]=Microsoft .NET Framework 1.1
+set INSTALL[1][version]=1.1.4322
+set INSTALL[1][url]=https://download.microsoft.com/download/a/a/c/aac39226-8825-44ce-90e3-bf8203e74006/dotnetfx.exe
+set INSTALL[1][md5]=52456ac39bbb4640930d155c15160556
+set INSTALL[1][cmd]=start /wait %CACHE%\dotnetfx.exe /q:a /c:"install.exe /qb /l"
 
-set INSTALL[2][name]=Microsoft .NET Framework 1.1
-set INSTALL[2][version]=1.1.4322
-set INSTALL[2][url]=https://download.microsoft.com/download/a/a/c/aac39226-8825-44ce-90e3-bf8203e74006/dotnetfx.exe
-set INSTALL[2][md5]=52456ac39bbb4640930d155c15160556
-set INSTALL[2][cmd]=start /wait %CACHE%\dotnetfx.exe /q:a /c:"install.exe /qb /l"
+set INSTALL[2][name]=Microsoft DirectX SDK (August 2007)
+set INSTALL[2][version]=9.20.1057
+set INSTALL[2][url]=https://download.microsoft.com/download/3/3/f/33f1af6e-c61b-4f14-a0de-3e9096ed4b3a/dxsdk_aug2007.exe
+set INSTALL[2][md5]=e866e58a5cbfc98b3880261b5ae78529
+set INSTALL[2][cmd]=call :INSTALLDIRECTXSDK
 
-set INSTALL[3][name]=Microsoft DirectX SDK (August 2007)
-set INSTALL[3][version]=9.20.1057
-set INSTALL[3][url]=https://download.microsoft.com/download/3/3/f/33f1af6e-c61b-4f14-a0de-3e9096ed4b3a/dxsdk_aug2007.exe
-set INSTALL[3][md5]=e866e58a5cbfc98b3880261b5ae78529
-set INSTALL[3][cmd]=call :INSTALLDIRECTXSDK
+set INSTALL[3][name]=Microsoft Build Tools 14.0 (x86)
+set INSTALL[3][version]=14.0.25420
+set INSTALL[3][url]=http://download.microsoft.com/download/5/f/7/5f7acaeb-8363-451f-9425-68a90f98b238/visualcppbuildtools_full.exe
+set INSTALL[3][md5]=8d4afd3b226babecaa4effb10d69eb2e
+set INSTALL[3][cmd]=start /wait %CACHE%\visualcppbuildtools_full.exe /Passive /Full
 
-set INSTALL[4][name]=Microsoft Build Tools 14.0 (x86)
-set INSTALL[4][version]=14.0.25420
-set INSTALL[4][url]=http://download.microsoft.com/download/5/f/7/5f7acaeb-8363-451f-9425-68a90f98b238/visualcppbuildtools_full.exe
-set INSTALL[4][md5]=8d4afd3b226babecaa4effb10d69eb2e
-set INSTALL[4][cmd]=start /wait %CACHE%\visualcppbuildtools_full.exe /Passive /Full
-
-for /l %%n in (0,1,4) do (
+for /l %%n in (0,1,3) do (
 	echo Checking installation: !INSTALL[%%n][name]!
 	call :ISINSTALLED "!INSTALL[%%n][name]!" "!INSTALL[%%n][version]!" || (
 		for %%i in (!INSTALL[%%n][url]!) do (
@@ -135,7 +128,7 @@ set CLONE[3][branch]=master
 
 for /l %%n in (0,1,3) do (
 	echo Checking git clone: !CLONE[%%n][name]!
-	pushd %BUILD% && %GIT% clone -b !CLONE[%%n][branch]! !CLONE[%%n][url]!
+	pushd %BUILD% && git clone -b !CLONE[%%n][branch]! !CLONE[%%n][url]!
 	popd
 )
 
