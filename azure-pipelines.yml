@@ -15,11 +15,9 @@ variables:
   buildConfiguration: 'Release'
 
 steps:
-- task: NuGetToolInstaller@0
-
-- task: NuGetCommand@2
+- task: BatchScript@1
   inputs:
-    restoreSolution: '$(solution)'
+    filename: Script/build_ags_windows.cmd
 
 - task: VSBuild@1
   inputs:
@@ -27,7 +25,3 @@ steps:
     platform: '$(buildPlatform)'
     configuration: '$(buildConfiguration)'
 
-- task: VSTest@2
-  inputs:
-    platform: '$(buildPlatform)'
-    configuration: '$(buildConfiguration)'
