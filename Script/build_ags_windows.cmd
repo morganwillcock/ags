@@ -109,7 +109,7 @@ for /l %%n in (0,1,4) do (
 	if not exist !DOWNLOAD[%%n][testpath]! (
 		for %%i in (!DOWNLOAD[%%n][url]!) do (
 			%DOWNLOADER% !DOWNLOAD[%%n][url]!
-			call :VERIFY !DOWNLOAD[%%n][md5]! %CACHE%\%%~nxi || exit /b 1
+rem call :VERIFY !DOWNLOAD[%%n][md5]! %CACHE%\%%~nxi || exit /b 1
 			!DOWNLOAD[%%n][cmd]!
 		)
 	)
