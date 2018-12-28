@@ -3,6 +3,10 @@ setlocal enabledelayedexpansion
 
 echo Build environment: & set
 
+%VS140COMNTOOLS%\vsvars32.bat
+
+echo Build environment (after vcvars32): & set
+
 set AGS=%SYSTEMDRIVE%\AGS
 set CACHE=%AGS%\Cache
 set BUILD=%AGS%\Build
