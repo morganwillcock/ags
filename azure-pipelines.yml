@@ -19,9 +19,4 @@ steps:
   inputs:
     filename: Script/build_ags_windows.cmd
 
-- task: VSBuild@1
-  inputs:
-    solution: '$(solution)'
-    platform: '$(buildPlatform)'
-    configuration: '$(buildConfiguration)'
 
