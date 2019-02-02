@@ -258,6 +258,52 @@ namespace AGS.Editor.Utils
             bmp.Dispose();
         }
 
+        public static string[] ReplaceSpritesFromSource(List<Sprite> sprites)
+        {
+            List<string> errors = new List<string>();
+            Progress progress = new Progress(sprites.Count, "Re-importing from source files...");
+            progress.Show();
+
+            for (int index = 0; index < sprites.Count; index++)
+            {
+                Sprite sprite = sprites[index];
+                progress.SetProgressValue(index);
+
+                try
+                {
+                    SpriteSheet spritesheet;
+
+                    // if offset would make a selection, use it
+                    if (sprite.OffsetX > 0 || sprite.OffsetY > 0)
+                    {
+                        spritesheet = new SpriteSheet(new Point(sprite.OffsetX, sprite.OffsetY), new Size(sprite.Width, sprite.Height));
+                    }
+                    else
+                    {
+                        spritesheet = null;
+                    }
+
+                    SpriteTools.ReplaceSprite(sprite, sprite.SourceFile, sprite.Frame, sprite.AlphaChannel,
+                        sprite.RemapToGamePalette, sprite.RemapToRoomPalette, sprite.TransparentColour, spritesheet);
+                }
+                catch (Exception ex)
+                {
+                    if (ex is InvalidOperationException || ex is Types.InvalidDataException)
+                    {
+                        errors.Add(ex.Message);
+                    }
+                    else
+                    {
+                        throw;
+                    }
+                }
+            }
+
+            progress.Hide();
+            progress.Dispose();
+            return errors.ToArray();
+        }
+
         public static void ImportNewSprite(SpriteFolder folder, Bitmap bmp, bool alpha, bool remapColours, bool useRoomBackground,
             SpriteImportTransparency transparency, string filename = "", int frame = 0, int offsetX = 0, int offsetY = 0)
         {
@@ -439,6 +485,43 @@ namespace AGS.Editor.Utils
         {
             SpriteFolder folder = Factory.AGSEditor.CurrentGame.RootSpriteFolder;
             ExportSprites(folder, path, recurse, skipValidSourcePath, updateSourcePath);
+        }
+
+        public static bool CheckSpriteSource(Sprite sprite, out String message)
+        {
+            if (string.IsNullOrEmpty(sprite.SourceFile))
+            {
+                message = string.Format("Sprite {0} does not have a source file.", sprite.Number);
+                return false;
+            }
+
+            string source = Utilities.ResolveSourcePath(sprite.SourceFile);
+
+            if (!File.Exists(source))
+            {
+                message = string.Format("Sprite {0}: source file {1} does not exist.", sprite.Number, source);
+                return false;
+            }
+
+            message = string.Empty;
+            return true;
+        }
+
+        public static string[] CheckSpriteSource(List<Sprite> sprites)
+        {
+            List<string> errors = new List<string>();
+
+            foreach (Sprite sprite in sprites)
+            {
+                string message;
+
+                if (!CheckSpriteSource(sprite, out message))
+                {
+                    errors.Add(message);
+                }
+            }
+
+            return errors.ToArray();
         }
 
         public static Bitmap GetPlaceHolder(int width = 12, int height = 7)

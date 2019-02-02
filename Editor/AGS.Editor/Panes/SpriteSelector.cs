@@ -784,78 +784,48 @@ namespace AGS.Editor
             }
         }
 
-        private void ReplaceSpritesFromSource()
+        private void ShowErrors(string[] errors)
         {
-            List<string> errors = new List<string>();
-            List<Sprite> sprites = new List<Sprite>();
-
-            foreach (ListViewItem listItem in spriteList.SelectedItems) //Check sources still exist
-            {
-                Sprite spr = FindSpriteByNumber(Convert.ToInt32(listItem.Text));
-                if (String.IsNullOrEmpty(spr.SourceFile))
-                {
-                    Factory.GUIController.ShowMessage(String.Format("Sprite {0} does not have a source file.", spr.Number), MessageBoxIcon.Error);
-                    return;
-                }
-                else if (!File.Exists(spr.SourceFile))
-                {
-                    Factory.GUIController.ShowMessage(String.Format("Sprite {0}: source file {1} does not exist.", spr.Number, spr.SourceFile), MessageBoxIcon.Error);
-                    return;
-                }
-                sprites.Add(spr);
-            }
-
-            Progress progress = new Progress(sprites.Count, "Re-importing from source files...");
-            progress.Show();
-
-            for (int index = 0; index < sprites.Count; index ++)
-            {
-                Sprite spr = sprites[index];
-                progress.SetProgressValue(index);
-
-                try
-                {
-                    SpriteSheet spritesheet;
-
-                    // if offset would make a selection, use it
-                    if (spr.OffsetX > 0 || spr.OffsetY > 0)
-                    {
-                        spritesheet = new SpriteSheet(new Point(spr.OffsetX, spr.OffsetY), new Size(spr.Width, spr.Height));
-                    }
-                    else
-                    {
-                        spritesheet = null;
-                    }
-
-                    SpriteTools.ReplaceSprite(spr, spr.SourceFile, spr.Frame, spr.AlphaChannel, spr.RemapToGamePalette, spr.RemapToRoomPalette, spr.TransparentColour, spritesheet);
-                }
-                catch (Exception ex)
-                {
-                    if (ex is InvalidOperationException || ex is Types.InvalidDataException)
-                    {
-                        errors.Add(ex.Message);
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-            }
-
-            progress.Hide();
-            progress.Dispose();
-            RefreshSpriteDisplay();
             Factory.GUIController.ClearOutputPanel();
 
-            if (errors.Count == 1)
+            if (errors.Length == 1)
             {
                 Factory.GUIController.ShowMessage(errors[0], MessageBoxIcon.Warning);
             }
-            else if (errors.Count > 1)
+            else if (errors.Length > 1)
             {
-                Factory.GUIController.ShowOutputPanel(errors.ToArray(), "SpriteIcon");
+                Factory.GUIController.ShowOutputPanel(errors, "SpriteIcon");
                 Factory.GUIController.ShowMessage("Sprite replacement complete, with some errors", MessageBoxIcon.Warning);
             }
+        }
+
+        private void ReplaceSpritesFromSource()
+        {
+            List<Sprite> sprites = new List<Sprite>();
+            List<string> errors = new List<string>();
+
+            // build sprite list
+            foreach (ListViewItem listItem in spriteList.SelectedItems)
+            {
+                Sprite sprite = FindSpriteByNumber(Convert.ToInt32(listItem.Text));
+                string message;
+
+                if (SpriteTools.CheckSpriteSource(sprite, out message))
+                {
+                    sprites.Add(sprite);
+                }
+                else
+                {
+                    errors.Add(message);
+                }
+            }
+
+            // do sprite replacement from source
+            errors.AddRange(SpriteTools.ReplaceSpritesFromSource(sprites));
+            RefreshSpriteDisplay();
+
+            // display missing sources as well as import issues
+            ShowErrors(errors.ToArray());
         }
 
         private string GetTempFileNameForSprite(Sprite sprite, out ImageFormat fileFormat)
