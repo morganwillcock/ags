@@ -1,3 +1,4 @@
+using AGS.Editor.Utils;
 using AGS.Types;
 using Microsoft.Win32;
 using System;
@@ -290,7 +291,16 @@ namespace AGS.Editor
             Bitmap newBmp = new Bitmap(width, height, PixelFormat.Format32bppRgb);
             Graphics g = Graphics.FromImage(newBmp);
             g.Clear(backgroundColour);
-            Bitmap bitmapToDraw = Factory.NativeProxy.GetBitmapForSprite(sprite.Number, newWidth, newHeight);
+            Bitmap bitmapToDraw = SpriteTools.GetPlaceHolder(newWidth, newHeight);
+
+            try
+            {
+                bitmapToDraw = Factory.NativeProxy.GetBitmapForSprite(sprite.Number, newWidth, newHeight);
+            }
+            catch (Exception)
+            {
+                // pass
+            }
 
             int x = 0, y = 0;
             if (centreInNewCanvas)

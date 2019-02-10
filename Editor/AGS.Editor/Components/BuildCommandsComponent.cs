@@ -7,6 +7,7 @@ using System.Text;
 using System.Windows.Forms;
 using System.Xml;
 using AGS.Editor.Preferences;
+using AGS.Editor.Utils;
 
 namespace AGS.Editor.Components
 {
@@ -15,6 +16,7 @@ namespace AGS.Editor.Components
         private const string DEBUG_MENU_ID = "DebugMenuHeader";
 
         private const string COMPILE_GAME_COMMAND = "CompileGame";
+        private const string REBUILD_SPRITECACHE_COMMAND = "RebuildSpriteCache";
 		private const string REBUILD_GAME_COMMAND = "RebuildGame";
 		private const string SETUP_GAME_COMMAND = "SetupGame";
         private const string TEST_GAME_COMMAND = "TestGame";
@@ -58,7 +60,8 @@ namespace AGS.Editor.Components
             debugCommands.Commands.Add(new MenuCommand(STOP_COMMAND, "&Stop", Keys.Shift | Keys.F5, "StopMenuIcon"));
             debugCommands.Commands.Add(MenuCommand.Separator);
             debugCommands.Commands.Add(new MenuCommand(COMPILE_GAME_COMMAND, "&Build EXE", Keys.F7, "MenuIconBuildEXE"));
-			debugCommands.Commands.Add(new MenuCommand(REBUILD_GAME_COMMAND, "Rebuild &all files", "RebuildAllMenuIcon"));
+            debugCommands.Commands.Add(new MenuCommand(REBUILD_GAME_COMMAND, "Rebuild &game files", "RebuildAllMenuIcon"));
+            debugCommands.Commands.Add(new MenuCommand(REBUILD_SPRITECACHE_COMMAND, "Rebuild sprite &cache", "RebuildAllMenuIcon"));
 			debugCommands.Commands.Add(new MenuCommand(SETUP_GAME_COMMAND, "Run game setu&p...", "SetupGameMenuIcon"));
             _guiController.AddMenuItems(this, debugCommands);
 
@@ -206,6 +209,10 @@ namespace AGS.Editor.Components
             {
                 _agsEditor.Debugger.PauseExecution();
             }
+            else if (controlID == REBUILD_SPRITECACHE_COMMAND)
+            {
+                RebuildSpriteCache();
+            }
             else if (controlID == COMPILE_GAME_COMMAND)
             {
 				CompileGame(false);
@@ -297,5 +304,43 @@ namespace AGS.Editor.Components
             _testGameInProgress = false;
         }
 
+        private void RebuildSpriteCache()
+        {
+            SpriteFolder root = Factory.AGSEditor.CurrentGame.RootSpriteFolder;
+            List<Sprite> sprites = (List<Sprite>)root.GetAllSpritesFromAllSubFolders();
+            string[] errors = SpriteTools.CheckSpriteSource(sprites);
+            Factory.GUIController.ClearOutputPanel();
+
+            if (errors.Length == 1)
+            {
+                Factory.GUIController.ShowMessage(errors[0], MessageBoxIcon.Warning);
+                return;
+            }
+
+            if (errors.Length > 1)
+            {
+                Factory.GUIController.ShowOutputPanel(errors, "SpriteIcon");
+                Factory.GUIController.ShowMessage("Sprite cache sources are incomplete.", MessageBoxIcon.Warning);
+                return;
+            }
+
+            errors = SpriteTools.ReplaceSpritesFromSource(sprites);
+
+            if (errors.Length == 1)
+            {
+                Factory.GUIController.ShowMessage(errors[0], MessageBoxIcon.Warning);
+            }
+            else if (errors.Length > 1)
+            {
+                Factory.GUIController.ShowOutputPanel(errors, "SpriteIcon");
+                Factory.GUIController.ShowMessage("Sprite cache sources are incomplete.", MessageBoxIcon.Warning);
+            }
+            else
+            {
+                Factory.GUIController.ShowMessage("Sprite cache rebuild.", MessageBoxIcon.Information);
+            }
+
+            root.NotifyClientsOfUpdate();
+        }
     }
 }

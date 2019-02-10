@@ -121,7 +121,14 @@ namespace AGS.Editor
             else
             {
                 Factory.AGSEditor.LoadGameFile(gameToLoad);
-                Factory.NativeProxy.LoadNewSpriteFile();
+                try
+                {
+                    Factory.NativeProxy.LoadNewSpriteFile();
+                }
+                catch (Exception ex)
+                {
+                    Factory.GUIController.ShowMessage(ex.Message, MessageBoxIconType.Warning);
+                }
                 game = Factory.AGSEditor.CurrentGame;
             }
 
