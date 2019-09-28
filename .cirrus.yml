@@ -1,3 +1,32 @@
+aliases:
+  get_artifacts: &GET_ARTIFACTS
+    get_artifacts_list_script: |
+      query="{ build(id: $CIRRUS_BUILD_ID) { tasks { name artifacts { name files { path } } } } }"
+      filter=".data[].tasks[] | \
+        select(.artifacts|length>0) | \
+        { task: .name, artifacts: .artifacts[] } | \
+        { task: .task, artifact: .artifacts.name, path: .artifacts.files[].path } | \
+        join(\"/\") | scan(\"$ARTIFACT_FILTER\")"
+      curl -Ss \
+        -H "Content-Type: application/json" \
+        -H "Authorization: bearer $CIRRUS_API_TOKEN" \
+        -X POST \
+        -d "{\"query\": \"query $query\"}" \
+        https://api.cirrus-ci.com/graphql | \
+      jq -r "$filter" | \
+      sort | \
+      tee /tmp/artifacts_$CIRRUS_TASK_ID
+    get_artifacts_download_script: |
+      if [ -z "$ARTIFACT_DOWNLOAD" ]; then
+        echo "Artifact download was not requested."
+        exit 0
+      fi
+      sed "s@^@--url https://api.cirrus-ci.com/v1/artifact/build/$CIRRUS_BUILD_ID/@" \
+        /tmp/artifacts_$CIRRUS_TASK_ID > /tmp/curl_$CIRRUS_TASK_ID
+      mkdir -p "$ARTIFACT_DOWNLOAD" && \
+      cd "$ARTIFACT_DOWNLOAD" && \
+      curl -fL --remote-name-all --config /tmp/curl_$CIRRUS_TASK_ID
+
 build_windows_task:
   windows_container:
     dockerfile: ci/windows/Dockerfile
@@ -26,6 +55,7 @@ build_windows_task:
     path: Solutions/.build/*/*
 
 build_linux_cmake_task:
+  only_if: $CIRRUS_RELEASE == ''
   container:
     dockerfile: ci/linux/Dockerfile
     docker_arguments:
@@ -86,6 +116,7 @@ build_linux_debian_task:
     path: data_*.tar.gz
 
 build_linux_make_task:
+  only_if: $CIRRUS_RELEASE == ''
   container:
     dockerfile: ci/linux/Dockerfile
     docker_arguments:
@@ -260,15 +291,36 @@ editor_packaging_task:
   archive_artifacts:
     path: AGS-*.zip
 
+pdb_packaging_task:
+  depends_on:
+    - build_editor
+    - build_windows
+  freebsd_instance:
+    image: freebsd-12-0-release-amd64
+  env:
+    ARTIFACT_DOWNLOAD: /tmp/pdb
+    ARTIFACT_FILTER: .*Release.*\\.pdb
+    CIRRUS_API_TOKEN: ENCRYPTED[28bbe6c2e83d3f3caf39332517a3f1adddaec26e906d081c85e2c177ea978a122a6a346a40da5a0b494d9a591055d5fe]
+  install_packages_script: pkg install -y jq
+  <<: *GET_ARTIFACTS
+  make_pdb_archive_script: |
+    version=$(awk -F"[ \"]+" '{ if ($1=="#define" && $2=="ACI_VERSION_STR") { print $3; exit } }' Common/core/def_version.h)
+    tar -f AGS-${version}-pdb.zip -acv --strip-components 3 /tmp/pdb
+  archive_artifacts:
+    path: AGS-*-pdb.zip
+
 make_release_task:
   depends_on:
     - build_android
     - build_linux_debian
     - editor_packaging
     - linux_packaging
+    - pdb_packaging
   freebsd_instance:
     image: freebsd-12-0-release-amd64
   env:
+    ARTIFACT_DOWNLOAD: /tmp/github_release
+    ARTIFACT_FILTER: .*(?:\\.deb|debug\\.apk|linux\\.tar\\.gz|\\.zip|Installer.*exe)
     CIRRUS_API_TOKEN: ENCRYPTED[28bbe6c2e83d3f3caf39332517a3f1adddaec26e906d081c85e2c177ea978a122a6a346a40da5a0b494d9a591055d5fe]
     GITHUB_TOKEN: ENCRYPTED[42b9b95198604f4f3f6744593d617b72e030396166a841123fd68c83bc3d7bd5b16a854ad0f0f11ce2b5249b88057980]
   install_packages_script: pkg install -y git jq
@@ -283,51 +335,11 @@ make_release_task:
         --exclude .cirrus.yml \
         .;
     done
-  download_artifacts_script: |
-    version=$(awk -F"[ \"]+" '{ if ($1=="#define" && $2=="ACI_VERSION_STR") { print $3; exit } }' Common/core/def_version.h)
-    query="{ build(id: $CIRRUS_BUILD_ID) { tasks { name artifacts { name files { path } } } } }"
-    filter=".data[].tasks[] | select(.artifacts|length>0) | \
-      { task: .name, artifacts: .artifacts[] } | \
-      { task: .task, artifact: .artifacts.name, path: .artifacts.files[].path } | \
-      join(\"/\")"
-    baseurl="https://api.cirrus-ci.com/v1/artifact/build/$CIRRUS_BUILD_ID"
-    echo "Base URL: $baseurl"
-    for download in $(curl -fLSs \
-      -H "Content-Type: application/json" \
-      -H "Authorization: bearer $CIRRUS_API_TOKEN" \
-      -X POST \
-      -d "{\"query\": \"query $query\"}" \
-      https://api.cirrus-ci.com/graphql | jq -r "$filter" | sort)
-    do
-      echo "Artifact: $download"
-      case "$download" in
-        */AGS-${version}-debug.apk|\
-        */AGS-$version.exe|\
-        */AGS-$version.zip|\
-        */ags_${version}_i386.deb|\
-        */ags_${version}_amd64.deb|\
-        */ags_${version}_linux.tar.gz)
-          echo " -> Downloading"
-          mkdir -p /tmp/github_release
-          curl -fLSso "/tmp/github_release/${download##*/}" "$baseurl/$download"
-          ;;
-        */Release/*.pdb)
-          echo " -> Downloading (for PDB archive)"
-          mkdir -p /tmp/pdb
-          curl -fLSso "/tmp/pdb/${download##*/}" "$baseurl/$download"
-          ;;
-      esac
-    done
-    if [ -d /tmp/pdb ]; then
-      echo "Creating PDB archive"
-      mkdir -p /tmp/github_release
-      tar -f /tmp/github_release/AGS-${version}-pdb.zip -acv --strip-components 3 /tmp/pdb
-    fi
+  <<: *GET_ARTIFACTS
   create_checksums_script: >
     cd /tmp/github_release &&
-    sha256 -r * | sed -E "s/[[:blank:]]+/  /" > /tmp/checksums.sha256 &&
-    mv /tmp/checksums.sha256 . &&
-    cat checksums.sha256
+    sha256 -r * | sed -E "s/[[:blank:]]+/  /" | tee /tmp/checksums.sha256 &&
+    mv /tmp/checksums.sha256 .
   upload_release_script: |
     if [ -z "$CIRRUS_RELEASE" ]; then
       echo "This is not a release."
