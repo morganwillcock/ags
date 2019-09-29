@@ -214,21 +214,22 @@ build_editor_task:
 linux_packaging_task:
   depends_on:
     - build_linux_debian
-  freebsd_instance:
-    image: freebsd-12-0-release-amd64
+  container:
+    image: alpine:3.10
   env:
     ALLEGRO_RELEASE: v4.4.3.1-agspatch-2
+  install_packages_script: apk add --no-cache curl libarchive-tools
   package_script: |
     tmp=/tmp/bundle$$
     mkdir -p $tmp/data
     for archbit in i386-32 amd64-64; do
       echo Downloading files for ${archbit%-*}
       url="https://api.cirrus-ci.com/v1/artifact/build/$CIRRUS_BUILD_ID/build_linux_debian/data_files/data_${archbit%-*}.tar.gz"
-      curl -fLsS "$url" | tar -f - -xvzC $tmp/data
+      curl -fLsS "$url" | bsdtar -f - -xvzC $tmp/data
       echo Downloading Allegro $ALLEGRO_RELEASE ${archbit%-*}
       mkdir $tmp/allegro_${ALLEGRO_RELEASE}_${archbit%-*}
       url="https://github.com/adventuregamestudio/lib-allegro/releases/download/$ALLEGRO_RELEASE/lib-allegro_release_${archbit%-*}.tar.gz"
-      curl -fLsS "$url" | tar -f - -xvzC $tmp/allegro_${ALLEGRO_RELEASE}_${archbit%-*} --strip-components 1 -s '|pkgconfig/.*||' lib
+      curl -fLsS "$url" | bsdtar -f - -xvzC $tmp/allegro_${ALLEGRO_RELEASE}_${archbit%-*} --strip-components 1 -s '|pkgconfig/.*||' lib
       find $tmp/allegro_${ALLEGRO_RELEASE}_${archbit%-*} \( -name "alleg-*" -or -name "liballeg.so.?.?" \) \
         -exec cp -v "{}" $tmp/data/lib${archbit#*-}/ \;
       echo alleg-sdl2digi.so >> $tmp/data/lib${archbit#*-}/modules.lst
@@ -237,7 +238,7 @@ linux_packaging_task:
     cp -v debian/ags+libraries/startgame $tmp/
     awk 'BEGIN { RS="" } !/make_ags/ { if (NR>1) print RS; print }' debian/ags+libraries/README > $tmp/README
     version=$(awk -F"[ \"]+" '{ if ($1=="#define" && $2=="ACI_VERSION_STR") { print $3; exit } }' Common/core/def_version.h)
-    tar -f ags_${version}_linux.tar.gz -cvzC $tmp data startgame README
+    bsdtar -f ags_${version}_linux.tar.gz -cvzC $tmp data startgame README
   binaries_artifacts:
     path: ags_*.tar.gz
 
@@ -295,17 +296,17 @@ pdb_packaging_task:
   depends_on:
     - build_editor
     - build_windows
-  freebsd_instance:
-    image: freebsd-12-0-release-amd64
+  container:
+    image: alpine:3.10
   env:
     ARTIFACT_DOWNLOAD: /tmp/pdb
     ARTIFACT_FILTER: .*Release.*\\.pdb
     CIRRUS_API_TOKEN: ENCRYPTED[28bbe6c2e83d3f3caf39332517a3f1adddaec26e906d081c85e2c177ea978a122a6a346a40da5a0b494d9a591055d5fe]
-  install_packages_script: pkg install -y jq
+  install_packages_script: apk add --no-cache curl jq libarchive-tools
   <<: *GET_ARTIFACTS
   make_pdb_archive_script: |
     version=$(awk -F"[ \"]+" '{ if ($1=="#define" && $2=="ACI_VERSION_STR") { print $3; exit } }' Common/core/def_version.h)
-    tar -f AGS-${version}-pdb.zip -acv --strip-components 3 /tmp/pdb
+    bsdtar -f AGS-${version}-pdb.zip -acv --strip-components 3 /tmp/pdb
   archive_artifacts:
     path: AGS-*-pdb.zip
 
@@ -316,21 +317,22 @@ make_release_task:
     - editor_packaging
     - linux_packaging
     - pdb_packaging
-  freebsd_instance:
-    image: freebsd-12-0-release-amd64
+  container:
+    image: alpine:3.10
   env:
     ARTIFACT_DOWNLOAD: /tmp/github_release
     ARTIFACT_FILTER: .*(?:\\.deb|debug\\.apk|linux\\.tar\\.gz|\\.zip|Installer.*exe)
     CIRRUS_API_TOKEN: ENCRYPTED[28bbe6c2e83d3f3caf39332517a3f1adddaec26e906d081c85e2c177ea978a122a6a346a40da5a0b494d9a591055d5fe]
     GITHUB_TOKEN: ENCRYPTED[42b9b95198604f4f3f6744593d617b72e030396166a841123fd68c83bc3d7bd5b16a854ad0f0f11ce2b5249b88057980]
-  install_packages_script: pkg install -y git jq
+  install_packages_script: apk add --no-cache curl git jq libarchive-tools outils-sha256
   git_submodules_script: git submodule update --init --recursive
   create_source_archives_script: |
     version=$(awk -F"[ \"]+" '{ if ($1=="#define" && $2=="ACI_VERSION_STR") { print $3; exit } }' Common/core/def_version.h)
     mkdir -p /tmp/github_release && \
     for ext in tar.bz2 tar.gz tar.xz zip; do
-      tar -f /tmp/github_release/ags_${version}_source.$ext \
-        -acs "!\./\(.*\)!ags_${version}_source/\1!p" \
+      echo Writing $ext archive...
+      bsdtar -f /tmp/github_release/ags_${version}_source.$ext \
+        -acs "!\./\(.*\)!ags_${version}_source/\1!" \
         --exclude ".git*" \
         --exclude .cirrus.yml \
         .;
