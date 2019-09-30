@@ -1,32 +1,3 @@
-aliases:
-  get_artifacts: &GET_ARTIFACTS
-    get_artifacts_list_script: |
-      query="{ build(id: $CIRRUS_BUILD_ID) { tasks { name artifacts { name files { path } } } } }"
-      filter=".data[].tasks[] | \
-        select(.artifacts|length>0) | \
-        { task: .name, artifacts: .artifacts[] } | \
-        { task: .task, artifact: .artifacts.name, path: .artifacts.files[].path } | \
-        join(\"/\") | scan(\"$ARTIFACT_FILTER\")"
-      curl -Ss \
-        -H "Content-Type: application/json" \
-        -H "Authorization: bearer $CIRRUS_API_TOKEN" \
-        -X POST \
-        -d "{\"query\": \"query $query\"}" \
-        https://api.cirrus-ci.com/graphql | \
-      jq -r "$filter" | \
-      sort | \
-      tee /tmp/artifacts_$CIRRUS_TASK_ID
-    get_artifacts_download_script: |
-      if [ -z "$ARTIFACT_DOWNLOAD" ]; then
-        echo "Artifact download was not requested."
-        exit 0
-      fi
-      sed "s@^@--url https://api.cirrus-ci.com/v1/artifact/build/$CIRRUS_BUILD_ID/@" \
-        /tmp/artifacts_$CIRRUS_TASK_ID > /tmp/curl_$CIRRUS_TASK_ID
-      mkdir -p "$ARTIFACT_DOWNLOAD" && \
-      cd "$ARTIFACT_DOWNLOAD" && \
-      curl -fL --remote-name-all --config /tmp/curl_$CIRRUS_TASK_ID
-
 build_windows_task:
   windows_container:
     dockerfile: ci/windows/Dockerfile
@@ -251,14 +222,23 @@ editor_packaging_task:
     dockerfile: ci/windows/Dockerfile
     os_version: 2019
   env:
+    CIRRUS_API_TOKEN: ENCRYPTED[28bbe6c2e83d3f3caf39332517a3f1adddaec26e906d081c85e2c177ea978a122a6a346a40da5a0b494d9a591055d5fe]
     TEMPLATES_REPOSITORY: adventuregamestudio/ags-templates
   get_vcredist_script: >
     mkdir Windows\Installer\Source\Redist &&
     copy %SYSTEMDRIVE%\Redist\vc_redist.x86.exe Windows\Installer\Source\Redist\
   get_editor_script: >
+    jq -nrf ci\jq\artifact_query.jq > %TEMP%\query.curl &&
+    curl -sS --config %TEMP%\query.curl |
+    jq -rf ci\jq\artifact_filter.jq
+    --arg regex "build_editor/binaries/.*/Release"
+    --arg basename "https://api.cirrus-ci.com/v1/artifact/build/%CIRRUS_BUILD_ID%/"
+    --args curlify
+    > %TEMP%\urls.curl &&
+    del %TEMP%\query.curl &&
     mkdir Windows\Installer\Source\Editor &&
-    curl -fLSs "https://api.cirrus-ci.com/v1/artifact/build/%CIRRUS_BUILD_ID%/build_editor/binaries.zip" |
-    tar -f - -xvzC Windows\Installer\Source\Editor --strip-components 3 Solutions/.build/Release
+    cd Windows\Installer\Source\Editor &&
+    curl -fL --remote-name-all --config %TEMP%\urls.curl
   get_windows_engine_script: >
     mkdir Windows\Installer\Source\Engine &&
     curl -fLSso Windows\Installer\Source\Engine\acwin.exe
@@ -299,11 +279,20 @@ pdb_packaging_task:
   container:
     image: alpine:3.10
   env:
-    ARTIFACT_DOWNLOAD: /tmp/pdb
-    ARTIFACT_FILTER: .*Release.*\\.pdb
     CIRRUS_API_TOKEN: ENCRYPTED[28bbe6c2e83d3f3caf39332517a3f1adddaec26e906d081c85e2c177ea978a122a6a346a40da5a0b494d9a591055d5fe]
   install_packages_script: apk add --no-cache curl jq libarchive-tools
-  <<: *GET_ARTIFACTS
+  download_pdb_files_script: >
+    jq -nrf ci/jq/artifact_query.jq > /tmp/query.curl &&
+    curl -sS --config /tmp/query.curl |
+    jq -rf ci/jq/artifact_filter.jq
+    --arg regex "Release/.*\\.pdb$"
+    --arg basename "https://api.cirrus-ci.com/v1/artifact/build/$CIRRUS_BUILD_ID/"
+    --args curlify
+    > /tmp/urls.curl &&
+    rm /tmp/query.curl &&
+    mkdir -p /tmp/pdb &&
+    cd /tmp/pdb &&
+    curl -fL --remote-name-all --config /tmp/urls.curl
   make_pdb_archive_script: |
     version=$(awk -F"[ \"]+" '{ if ($1=="#define" && $2=="ACI_VERSION_STR") { print $3; exit } }' Common/core/def_version.h)
     bsdtar -f AGS-${version}-pdb.zip -acv --strip-components 3 /tmp/pdb
@@ -320,8 +309,6 @@ make_release_task:
   container:
     image: alpine:3.10
   env:
-    ARTIFACT_DOWNLOAD: /tmp/github_release
-    ARTIFACT_FILTER: .*(?:\\.deb|debug\\.apk|linux\\.tar\\.gz|\\.zip|Installer.*exe)
     CIRRUS_API_TOKEN: ENCRYPTED[28bbe6c2e83d3f3caf39332517a3f1adddaec26e906d081c85e2c177ea978a122a6a346a40da5a0b494d9a591055d5fe]
     GITHUB_TOKEN: ENCRYPTED[42b9b95198604f4f3f6744593d617b72e030396166a841123fd68c83bc3d7bd5b16a854ad0f0f11ce2b5249b88057980]
   install_packages_script: apk add --no-cache curl git jq libarchive-tools outils-sha256
@@ -337,7 +324,18 @@ make_release_task:
         --exclude .cirrus.yml \
         .;
     done
-  <<: *GET_ARTIFACTS
+  download_release_files_script: >
+    jq -nrf ci/jq/artifact_query.jq > /tmp/query.curl &&
+    curl -sS --config /tmp/query.curl |
+    jq -rf ci/jq/artifact_filter.jq
+    --arg regex "(\\.deb|debug\\.apk|linux\\.tar\\.gz|\\.zip|Installer.*\\.exe)$"
+    --arg basename "https://api.cirrus-ci.com/v1/artifact/build/$CIRRUS_BUILD_ID/"
+    --args curlify
+    > /tmp/urls.curl &&
+    rm /tmp/query.curl &&
+    mkdir -p /tmp/github_release &&
+    cd /tmp/github_release &&
+    curl -fL --remote-name-all --config /tmp/urls.curl
   create_checksums_script: >
     cd /tmp/github_release &&
     sha256 -r * | sed -E "s/[[:blank:]]+/  /" | tee /tmp/checksums.sha256 &&
