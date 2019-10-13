@@ -258,8 +258,8 @@ editor_packaging_task:
     move Windows\Installer\Source\Linux Windows\Installer\Source\Editor\ &&
     move Windows\Installer\Source\Templates Windows\Installer\Source\Editor\ &&
     move Windows\Installer\Source\URLs Windows\Installer\Source\Editor\ &&
-    call Script\setvar.cmd ACI_VERSION_STR &&
-    cmd /v:on /c tar -f AGS-!ACI_VERSION_STR!.zip -acv --strip-components 4 Windows\Installer\Source\Editor
+    for %%f in (Windows\Installer\Output\*.exe) do
+    tar -f %%~nf.zip -acv --strip-components 4 Windows\Installer\Source\Editor
   archive_artifacts:
     path: AGS-*.zip
 
