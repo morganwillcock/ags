@@ -2,5 +2,6 @@ title: Adventure Game Studio
 description: "A short description of your project"
 repository: adventuregamestudio/ags
 markdown: kramdown
+theme: null
 plugins:
   - jekyll-github-metadata
