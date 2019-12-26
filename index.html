@@ -1,6 +1,11 @@
 ---
 layout: default
-title: page title
+title: Latest release
 ---
 
-<p>test</p>
+<h3>{{ site.github.latest_release.name }} ({{ site.github.latest_release.published_at | date_to_long_string: "ordinal" }})</h3>
+<ul>
+{% for asset in site.github.latest_release.assets -%}
+    <li><a href="{{ asset.browser_download_url }}">{{ asset.name }}</a></li>
+{% endfor -%}
+</ul>
