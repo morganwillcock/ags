@@ -1,4 +1,5 @@
 _site
 .bundle
+.ruby-version
 vendor
 Gemfile.lock
