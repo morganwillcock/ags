@@ -527,9 +527,9 @@ namespace AGS.Editor
             scintilla.ShowCurrentExecutionPoint(lineNumber);
         }
 
-        public void SetErrorMessagePopup(string errorMessage)
+        public void SetErrorMessage(string errorMessage)
         {
-            scintilla.ShowErrorMessagePopup(errorMessage);
+            scintilla.ShowErrorMessage(errorMessage);
         }
 
         public int GetLineNumberForText(string text)
@@ -540,7 +540,6 @@ namespace AGS.Editor
         public void RemoveExecutionPointMarker()
         {
             scintilla.HideCurrentExecutionPoint();
-            scintilla.HideErrorMessagePopup();
         }
 
         private void ToggleBreakpoint(int line)

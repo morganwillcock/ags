@@ -235,7 +235,7 @@ namespace AGS.Editor
                 scintillaEditor.ShowCurrentExecutionPoint(evArgs.ZoomPosition);
                 if (evArgs.ErrorMessage != null)
                 {
-                    scintillaEditor.ShowErrorMessagePopup(evArgs.ErrorMessage);
+                    scintillaEditor.ShowErrorMessage(evArgs.ErrorMessage);
                 }
             }
         }
@@ -243,7 +243,6 @@ namespace AGS.Editor
         public void RemoveExecutionPointMarker()
         {
             scintillaEditor.HideCurrentExecutionPoint();
-            scintillaEditor.HideErrorMessagePopup();
         }
 
         private void ShowFindReplaceDialog(bool showReplace, bool showAll)

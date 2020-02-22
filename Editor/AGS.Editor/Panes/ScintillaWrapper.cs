@@ -81,7 +81,6 @@ namespace AGS.Editor
         private bool _autoDedentClosingBrace = true;
         private IScript _autoCompleteForThis = null;
         private bool _dwellCalltipVisible = false;
-        private ErrorPopup _errorPopup = null;
         private string _fixedTypeForThisKeyword = null;
         private bool _activated = false;
 
@@ -405,32 +404,11 @@ namespace AGS.Editor
             scintillaControl1.MarkerDeleteAll(MARKER_TYPE_CURRENT_STATEMENT2);
         }
 
-        public void ShowErrorMessagePopup(string errorMessage)
+        public void ShowErrorMessage(string errorMessage)
         {
             Form activeForm = Form.ActiveForm;
-
-            _errorPopup = new ErrorPopup(errorMessage);
-            int x = scintillaControl1.PointXFromPosition(this.scintillaControl1.CurrentPos) + 200;
-            int y = scintillaControl1.PointYFromPosition(this.scintillaControl1.CurrentPos) + 40;
-            Point mainWindowOffset = this.PointToScreen(new Point(0, 0));
-            _errorPopup.Location = new Point(mainWindowOffset.X + x, mainWindowOffset.Y + y);
-            _errorPopup.Show(this);
-
-            // don't allow the popup to steal the focus
-            if (activeForm != null)
-            {
-                activeForm.Activate();
-            }
-        }
-
-        public void HideErrorMessagePopup()
-        {
-            if (_errorPopup != null)
-            {
-                _errorPopup.Hide();
-                _errorPopup.Dispose();
-                _errorPopup = null;
-            }
+            string[] messages = new string[] { "Runtime script error:", errorMessage };
+            Factory.GUIController.ShowOutputPanel(messages, "CompileErrorIcon", true);
         }
 
         public void SetKeyWords(string keyWords)
