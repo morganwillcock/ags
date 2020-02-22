@@ -527,9 +527,9 @@ namespace AGS.Editor
             scintilla.ShowCurrentExecutionPoint(lineNumber);
         }
 
-        public void SetErrorMessage(string errorMessage)
+        public void SetErrorMessage(string errorMessage, string filename, int line)
         {
-            scintilla.ShowErrorMessage(errorMessage);
+            scintilla.ShowErrorMessage(errorMessage, filename, line);
         }
 
         public int GetLineNumberForText(string text)

@@ -235,7 +235,7 @@ namespace AGS.Editor
                 scintillaEditor.ShowCurrentExecutionPoint(evArgs.ZoomPosition);
                 if (evArgs.ErrorMessage != null)
                 {
-                    scintillaEditor.ShowErrorMessage(evArgs.ErrorMessage);
+                    scintillaEditor.ShowErrorMessage(evArgs.ErrorMessage, evArgs.FileName, evArgs.ZoomPosition);
                 }
             }
         }

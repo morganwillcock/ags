@@ -128,6 +128,15 @@ namespace AGS.Types
         /// <param name="imageOnce"></param>
         void ShowOutputPanel(string[] messages, string imageKey = null, bool imageOnce = false);
         /// <summary>
+        /// Shows the output panel with a specified message list
+        /// RequiredAGSVersion: 3.5.0.24
+        /// </summary>
+        /// <param name="message"></param>
+        /// <param name="imageKey"></param>
+        /// <param name="filename"></param>
+        /// <param name="line"></param>
+        void ShowOutputPanel(string message, string imageKey = null, string filename = null, int? line = null);
+        /// <summary>
         /// Clears the output panel
         /// RequiredAGSVersion: 3.3.0.1147
         /// </summary>

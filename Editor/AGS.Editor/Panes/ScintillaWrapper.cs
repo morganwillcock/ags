@@ -404,11 +404,10 @@ namespace AGS.Editor
             scintillaControl1.MarkerDeleteAll(MARKER_TYPE_CURRENT_STATEMENT2);
         }
 
-        public void ShowErrorMessage(string errorMessage)
+        public void ShowErrorMessage(string errorMessage, string filename, int line)
         {
             Form activeForm = Form.ActiveForm;
-            string[] messages = new string[] { "Runtime script error:", errorMessage };
-            Factory.GUIController.ShowOutputPanel(messages, "CompileErrorIcon", true);
+            Factory.GUIController.ShowOutputPanel(errorMessage, "CompileErrorIcon", filename, line);
         }
 
         public void SetKeyWords(string keyWords)

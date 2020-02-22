@@ -69,6 +69,19 @@ namespace AGS.Editor
             }
         }
 
+        public void ShowMessage(string message, string imageKey = null, string filename = null, int? line = null)
+        {
+            ListViewItem newItem = lvwResults.Items.Add(message);
+
+            if (imageKey != null)
+            {
+                newItem.ImageKey = imageKey;
+            }
+
+            newItem.SubItems.Add(filename != null ? filename : string.Empty);
+            newItem.SubItems.Add(line != null ? line.ToString() : string.Empty);
+        }
+
         public void Clear()
         {
             lvwResults.Items.Clear();

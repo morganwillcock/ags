@@ -39,7 +39,7 @@ namespace AGS.Editor.Components
                     editor.SetExecutionPointMarker(evArgs.ZoomPosition);
                     if (evArgs.ErrorMessage != null)
                     {
-                        editor.SetErrorMessage(evArgs.ErrorMessage);
+                        editor.SetErrorMessage(evArgs.ErrorMessage, evArgs.FileName, evArgs.ZoomPosition);
                     }
                 }
             }

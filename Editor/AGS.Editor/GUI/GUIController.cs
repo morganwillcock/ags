@@ -319,9 +319,10 @@ namespace AGS.Editor
             }
         }
 
-        public void ShowOutputPanel(string message, string imageKey = null)
+        public void ShowOutputPanel(string message, string imageKey = null, string filename = null, int? line = null)
         {
-            ShowOutputPanel(new string[] { message }, imageKey);
+            _mainForm.pnlOutput.ShowMessage(message, imageKey, filename, line);
+            _mainForm.pnlOutput.Show();
         }
 
         public void ShowOutputPanel(string[] messages, string imageKey = null, bool imageOnce = false)
