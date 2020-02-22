@@ -312,28 +312,27 @@ namespace AGS.Editor
 
         public void ShowOutputPanel(CompileMessages errors)
         {
-            _mainForm.pnlOutput.ErrorsToList = errors;
+            _mainForm.pnlOutput.ShowCompileMessages(errors);
             if (errors.Count > 0)
             {
                 _mainForm.pnlOutput.Show();
             }
         }
 
-        public void ShowOutputPanel(string[] messages, string imageKey = "BuildIcon")
+        public void ShowOutputPanel(string message, string imageKey = null)
         {
-            _mainForm.pnlOutput.SetMessages(messages, imageKey);
-            _mainForm.pnlOutput.Show();
+            ShowOutputPanel(new string[] { message }, imageKey);
         }
 
-        public void ShowOutputPanel(string message, string imageKey = "BuildIcon")
+        public void ShowOutputPanel(string[] messages, string imageKey = null, bool imageOnce = false)
         {
-            _mainForm.pnlOutput.SetMessage(message, imageKey);
+            _mainForm.pnlOutput.ShowMessages(messages, imageKey, imageOnce);
             _mainForm.pnlOutput.Show();
         }
 
         public void ClearOutputPanel()
         {
-            _mainForm.pnlOutput.ErrorsToList = null;
+            _mainForm.pnlOutput.Clear();
         }
 
         public void HideOutputPanel()

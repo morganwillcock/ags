@@ -13,7 +13,6 @@ namespace AGS.Editor
     public partial class OutputPanel : DockContent
     {
 		private const string MENU_ITEM_COPY_TO_CLIPBOARD = "CopyToClipboard";
-        private CompileMessages _errors;
 
         public OutputPanel()
         {
@@ -26,50 +25,53 @@ namespace AGS.Editor
 			lvwResults.SmallImageList = list;
 		}
 
-        public void SetMessages(string[] messages, string imageKey)
+        public void ShowCompileMessages(CompileMessages messages)
         {
-            foreach (string message in messages)
+            Clear();
+
+            foreach (CompileMessage error in messages)
             {
-                SetMessage(message, imageKey);
+                ListViewItem newItem = lvwResults.Items.Add(error.Message);
+                if (error is CompileError)
+                {
+                    newItem.ImageKey = "CompileErrorIcon";
+                }
+                else
+                {
+                    newItem.ImageKey = "CompileWarningIcon";
+                }
+
+                if (error.ScriptName.Length > 0)
+                {
+                    newItem.SubItems.Add(error.ScriptName);
+                    newItem.SubItems.Add(error.LineNumber.ToString());
+                }
             }
         }
 
-        public void SetMessage(string message, string imageKey)
+        public void ShowMessages(string[] messages, string imageKey = null, bool imageOnce = false)
         {
-            ListViewItem newItem = lvwResults.Items.Add(message);
-            newItem.ImageKey = imageKey;
-        }
+            Clear();
+            bool image = true;
 
-        public CompileMessages ErrorsToList
-        {
-            get { return _errors; }
-            set { _errors = value; RefreshList();  }
-        }
-
-        private void RefreshList()
-        {
-            lvwResults.Items.Clear();
-            if (_errors != null)
+            foreach (string message in messages)
             {
-                foreach (CompileMessage error in _errors)
+                ListViewItem newItem = lvwResults.Items.Add(message);
+
+                if (imageKey != null)
                 {
-                    ListViewItem newItem = lvwResults.Items.Add(error.Message);
-					if (error is CompileError)
-					{
-						newItem.ImageKey = "CompileErrorIcon";
-					}
-					else
-					{
-						newItem.ImageKey = "CompileWarningIcon";
-					}
-					
-					if (error.ScriptName.Length > 0)
+                    if (!imageOnce || image)
                     {
-                        newItem.SubItems.Add(error.ScriptName);
-                        newItem.SubItems.Add(error.LineNumber.ToString());
+                        newItem.ImageKey = imageKey;
+                        image = false;
                     }
                 }
             }
+        }
+
+        public void Clear()
+        {
+            lvwResults.Items.Clear();
         }
 
         private void btnClose_Click(object sender, EventArgs e)

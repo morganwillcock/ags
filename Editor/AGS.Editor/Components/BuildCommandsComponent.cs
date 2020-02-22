@@ -239,7 +239,7 @@ namespace AGS.Editor.Components
 				if (_agsEditor.CompileGame(forceRebuild, false).Count == 0)
 				{
 					string message = "Compilation successful!";
-					Factory.GUIController.ShowOutputPanel(message);
+					Factory.GUIController.ShowOutputPanel(message, "BuildIcon");
 
 					if (_agsEditor.Settings.MessageBoxOnCompile == MessageBoxOnCompile.Always)
 					{

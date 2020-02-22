@@ -187,7 +187,7 @@ namespace AGS.Editor
             this.pnlOutput.Dock = System.Windows.Forms.DockStyle.Fill;
             this.pnlOutput.DockPanel = this.mainContainer;
             this.pnlOutput.DockState = WeifenLuo.WinFormsUI.Docking.DockState.Unknown;
-            this.pnlOutput.ErrorsToList = null;
+            this.pnlOutput.Clear();
             this.pnlOutput.FloatPane = null;
             this.pnlOutput.Font = new System.Drawing.Font("Tahoma", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.pnlOutput.IsFloat = false;
